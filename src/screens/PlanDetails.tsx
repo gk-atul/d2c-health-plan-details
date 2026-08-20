@@ -6,6 +6,7 @@ import { Badge } from "@acko/badge";
 import { ToggleGroup, ToggleGroupItem } from "@acko/toggle";
 import { Separator } from "@acko/separator";
 import { Skeleton } from "@acko/skeleton";
+import { TextInput } from "@acko/text-input";
 import {
   ArrowLeft,
   Hospital,
@@ -21,6 +22,7 @@ import {
   Medicine,
   TriangleWarning,
   Cloud,
+  Discount,
 } from "@acko/icons";
 import CoverageShieldIllustration from "../assets/illustrations/coverage-shield.svg";
 
@@ -44,6 +46,13 @@ const NOT_COVERED_ITEMS: { Icon: IconType; label: string }[] = [
 
 // icon size wrapper — @acko/icons ship as 1em SVGs and must be sized via a
 // wrapper span (iconography.md), never width/height props.
+function Icon16({ icon: Cmp }: { icon: IconType }) {
+  return (
+    <span className="inline-flex size-16 shrink-0 [&_svg]:size-full" aria-hidden="true">
+      <Cmp aria-hidden="true" />
+    </span>
+  );
+}
 function Icon24({ icon: Cmp }: { icon: IconType }) {
   return (
     <span className="inline-flex size-24 shrink-0 [&_svg]:size-full" aria-hidden="true">
@@ -310,6 +319,21 @@ export function PlanDetails() {
   const [tab, setTab] = useState<string | string[]>("covered");
   const [heroImageFailed, setHeroImageFailed] = useState(false);
 
+  // Discount code — cards.md §8 CommerceCard's coupon-input/coupon-applied
+  // variants. Only "DISCOUNT" (case-insensitive) is treated as valid, per
+  // the fixed demo code requested for this screen.
+  const [couponCode, setCouponCode] = useState("");
+  const [couponStatus, setCouponStatus] = useState<"idle" | "applied" | "invalid">("idle");
+
+  const applyCoupon = useCallback(() => {
+    setCouponStatus(couponCode.trim().toUpperCase() === "DISCOUNT" ? "applied" : "invalid");
+  }, [couponCode]);
+
+  const removeCoupon = useCallback(() => {
+    setCouponStatus("idle");
+    setCouponCode("");
+  }, []);
+
   if (status === "loading") {
     return (
       <div style={{ background: "var(--surfaceBase)" }} className="min-h-screen">
@@ -530,6 +554,44 @@ export function PlanDetails() {
                 See details
               </Button>
             </div>
+
+            <Separator className="my-16 w-full" />
+
+            {/* Discount code — cards.md §8 CommerceCard's coupon-input /
+                coupon-applied variants, composed from real TextInput +
+                Button rather than a custom shell. */}
+            {couponStatus === "applied" ? (
+              <div className="flex w-full items-center justify-between gap-12 text-left">
+                <div className="flex items-center gap-8">
+                  <Icon16 icon={Discount} />
+                  <Typography as="p" scale="sm" emphasis="medium">
+                    Code "{couponCode.trim().toUpperCase()}" applied
+                  </Typography>
+                </div>
+                <Button variant="link" size="sm" onClick={removeCoupon}>
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <div className="w-full text-left">
+                <TextInput
+                  label="Discount code"
+                  placeholder="Enter code"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    if (couponStatus === "invalid") setCouponStatus("idle");
+                  }}
+                  error={couponStatus === "invalid"}
+                  errorText={couponStatus === "invalid" ? "That code isn't valid" : undefined}
+                  suffix={
+                    <Button variant="link" size="sm" onClick={applyCoupon}>
+                      Apply
+                    </Button>
+                  }
+                />
+              </div>
+            )}
           </div>
         </Card>
       </div>

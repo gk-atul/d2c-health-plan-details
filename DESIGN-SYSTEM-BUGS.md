@@ -290,6 +290,36 @@ accident.
 
 ---
 
+## 9. `@acko/text-input`'s focused/active and error border effects are unstyled
+
+**Severity:** Medium — no visible focus indicator (an accessibility regression) and no visible
+error border on any `TextInput` in this registry version.
+
+**Cause:** `text-input.css` reads `--inputFieldBorderActiveBottom` (focused/active gradient
+border) and `--inputFieldBorderErrorBottom` (error gradient border) — neither is defined in
+`@acko/tokens` (0 matches each). The token set does define `--inputFieldFocusRing`
+(`--borderFocus`) and `--inputFieldBorderError` (`--borderError`) for exactly these two states —
+the "Bottom" suffix on the CSS-side names looks like a rename that never made it back into the
+token package.
+
+**Confirmed via:** built the discount-code field for the Premium details card (`@acko/text-input`,
+composing cards.md §8 CommerceCard's documented `coupon-input` variant) and live-checked
+`getComputedStyle` on the gradient background: `background-image` resolved to `"none"` with the
+undefined var, leaving a fully transparent border on focus.
+
+**Fix:** alias to the real, correctly-named siblings:
+
+| Undefined (shipped CSS) | Real equivalent |
+|---|---|
+| `--inputFieldBorderActiveBottom` | `--inputFieldFocusRing` |
+| `--inputFieldBorderErrorBottom` | `--inputFieldBorderError` |
+
+**Fixed and verified here:** aliased in `src/index.css`. Verified live — focused state now
+renders a visible gradient border, and the error state (tested by submitting an invalid
+discount code) renders the red error gradient and error helper text correctly.
+
+---
+
 ## Also worth reconciling (not a bug, a docs/registry mismatch)
 
 `cards.md`'s catalog and the missing-components protocol both list `Tabs`, `Table`,

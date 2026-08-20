@@ -74,6 +74,21 @@
   --colorSurface: var(--surfaceBase);
 }
 
+/* ponytail: @acko/text-input@3.0.4's text-input.css reads
+   --inputFieldBorderActiveBottom and --inputFieldBorderErrorBottom for the
+   focused/active and error gradient border effect — neither exists in
+   @acko/tokens (0 matches). The token set does define --inputFieldFocusRing
+   (--borderFocus) and --inputFieldBorderError (--borderError) for exactly
+   these two states — the "Bottom" suffix looks like a rename that never
+   made it into the CSS. Confirmed live: the gradient's computed
+   background-image resolves to "none" with the undefined var, so focused
+   and error inputs render with a fully transparent border — no visible
+   focus indicator at all. See DESIGN-SYSTEM-BUGS.md bug #9. */
+:root {
+  --inputFieldBorderActiveBottom: var(--inputFieldFocusRing);
+  --inputFieldBorderErrorBottom: var(--inputFieldBorderError);
+}
+
 /* ponytail: these were plain @import — unlayered CSS beats ANY layered CSS
    per the Cascade Layers spec, regardless of specificity or source order.
    Tailwind puts its own utilities in @layer utilities, so every margin/etc
