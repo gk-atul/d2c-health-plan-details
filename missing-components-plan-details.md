@@ -1,3 +1,18 @@
+## Bug: premium price never actually reacted to the coupon state (my error)
+- **What happened:** the discount-code feature was built purely as a UI affordance — apply/
+  applied/invalid states all worked, but the Premium card's price row (`₹8,000` struck through,
+  `₹5,090/month` bold) was hardcoded to always show the discounted figure, regardless of
+  whether a coupon was actually applied. So the price looked identical whether or not you'd
+  ever touched the discount-code field, making the whole feature look cosmetic.
+- **Fix:** price row now branches on `couponStatus`. No coupon applied: plain bold `₹8,000`,
+  no strikethrough — that's just the premium, not a reference price with nothing to compare
+  against. Coupon applied: the existing struck-`₹8,000` + bold-`₹5,090/month` treatment.
+- **Scope note:** all three coupons (`DISCOUNT`, `FAMILY5`, `WELCOME10`) resolve to the same
+  `₹5,090/month` regardless of their differently-described savings ("Flat ₹500 off" / "5% off"
+  / "10% off") — wasn't asked to compute differentiated discount math per code, so didn't invent
+  one. Flagging in case that inconsistency (three different offers, one price) should be
+  addressed next.
+
 ## AnimatedDrawer
 - **Type:** VARIANT-GAP
 - **Screen:** plan-details (coupon browse sheet in the Premium details card)

@@ -652,13 +652,23 @@ export function PlanDetails() {
                   {/* Real figure from the team — resolves the earlier-flagged
                       pricing anomaly (₹1,600 struck through under ₹5,090/month
                       read as a hike, not a discount). ₹8,000 → ₹5,090 is a
-                      genuine markdown. */}
-                  <Typography as="span" scale="sm" color="secondary" className="line-through">
-                    ₹8,000
-                  </Typography>
-                  <Typography as="span" scale="lg" emphasis="bold">
-                    ₹5,090/month
-                  </Typography>
+                      genuine markdown — but only once a coupon is actually
+                      applied. Without one, ₹8,000 is just the premium, not
+                      a reference price to strike through. */}
+                  {couponStatus === "applied" ? (
+                    <>
+                      <Typography as="span" scale="sm" color="secondary" className="line-through">
+                        ₹8,000
+                      </Typography>
+                      <Typography as="span" scale="lg" emphasis="bold">
+                        ₹5,090/month
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography as="span" scale="lg" emphasis="bold">
+                      ₹8,000
+                    </Typography>
+                  )}
                 </div>
               </div>
               {/* "See details" is 11 chars — well under the 20ch cap, no
