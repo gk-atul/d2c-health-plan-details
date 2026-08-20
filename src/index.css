@@ -107,20 +107,19 @@
   --shadowFocusRing: 0 0 0 2px var(--borderFocus);
 }
 
-/* ponytail: @acko/drawer's open transition is a hardcoded 350ms literal
-   (`.acko-drawer-open .acko-drawer { transition-duration: 350ms }`) — not a
-   token reference, so there's nothing to alias via :root. acko-motion-system's
-   curves.md defines `motion.surface.open` (bottom sheet/modal/drawer open)
-   as 500-600ms, default 550ms, and @acko/tokens even has a real
-   --durationSlower: 500ms token the component could have used and didn't.
-   Overriding the literal directly — same unlayered-beats-layered mechanism
-   as the block below, just overriding a duration instead of aliasing an
-   undefined token. This is a partial fix: the *close* transition never
-   actually plays at all (component unmounts synchronously on open=false,
-   see DESIGN-SYSTEM-BUGS.md bug #11) — duration alone can't fix that. */
-.acko-drawer-open .acko-drawer {
-  transition-duration: var(--durationSlower);
-}
+/* ponytail: a `.acko-drawer-open .acko-drawer { transition-duration:
+   var(--durationSlower) }` override used to live here (superseding
+   @acko/drawer's hardcoded 350ms per curves.md's motion.surface.open).
+   Removed — it turned out to be dead the moment it was added: Drawer's own
+   `mounted` state and the `open` prop both go true on the same commit, so
+   there's never a separate "closed" frame for this class-based transition
+   to fire from at all (confirmed live: the panel's very first paint is
+   already `transform: matrix(1,0,0,1,0,0)`, class `acko-drawer-open`
+   already applied). The real fix drives the transition manually via inline
+   styles on Drawer's forwarded ref instead — see AnimatedDrawer in
+   PlanDetails.tsx and DESIGN-SYSTEM-BUGS.md bug #11. Inline styles always
+   beat a class rule, so this override would only ever have been inert
+   dead weight from here on. */
 
 /* ponytail: these were plain @import — unlayered CSS beats ANY layered CSS
    per the Cascade Layers spec, regardless of specificity or source order.

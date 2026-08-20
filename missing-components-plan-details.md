@@ -1,24 +1,29 @@
 ## AnimatedDrawer
 - **Type:** VARIANT-GAP
 - **Screen:** plan-details (coupon browse sheet in the Premium details card)
-- **What it is:** a thin local wrapper around the real `Drawer` (`@acko/drawer`) that plays an
-  actual exit animation when the coupon sheet closes.
+- **What it is:** a thin local wrapper around the real `Drawer` (`@acko/drawer`) that plays real
+  open *and* close animations for the panel and its backdrop — neither direction animates in the
+  real component as shipped.
 - **Closest @acko component:** `Drawer` (`@acko/drawer`)
-- **Why it didn't fit:** `Drawer`'s own React logic (`if (!mounted || !open) return null`)
-  unmounts synchronously the instant `open` goes false — its own `.acko-drawer-closing` CSS
-  (280ms) exists in the stylesheet but is never reachable from the component's own state
-  machine. See `DESIGN-SYSTEM-BUGS.md` bug #11 for the full investigation (also covers a
-  hardcoded-too-fast open duration, fixed the normal way via CSS override). The close half of
-  that bug can't be fixed with a token alias or stylesheet override since it's a JS-level defect,
-  not a styling one.
+- **Why it didn't fit:** two separate defects, same symptom (no visible easing). Close:
+  `Drawer`'s own React logic (`if (!mounted || !open) return null`) unmounts synchronously the
+  instant `open` goes false — its own `.acko-drawer-closing` CSS (280ms) exists in the
+  stylesheet but is never reachable. Open: `Drawer`'s internal `mounted` state and the `open`
+  prop both become true on the same render, so the panel's very first paint is already in the
+  fully-open state — there's no earlier "closed" frame for a CSS transition to interpolate
+  from, so the (also too-fast, separately noted) 350ms duration never gets a chance to run
+  either. See `DESIGN-SYSTEM-BUGS.md` bug #11 for the full investigation of both. Neither can be
+  fixed with a token alias or stylesheet override since both are structural/JS-level, not
+  styling issues.
 - **Props sketch:** identical to `DrawerProps` (`open`, `onClose`, `side`, `size`, `title`,
   `children`, ...) — same call-site shape as the real component, just re-exported locally.
-  Internally keeps `Drawer` mounted (always passing it `open={true}`) through the close, drives
-  the panel's exit itself via `Drawer`'s own forwarded ref (inline `transform`/`transition`
-  matching `transitions.md`'s documented 400ms ease-in exit), then unmounts for real once that
-  finishes.
+  Internally keeps `Drawer` mounted (always passing it `open={true}`) through the close, and
+  drives both the panel's transform and the backdrop's opacity itself via `Drawer`'s own
+  forwarded ref: on open, snap-to-closed + forced reflow + transition-to-open on the next frame;
+  on close, transition-to-closed then unmount once it finishes. Timing/easing match
+  `transitions.md`'s documented Drawer row (enter 500-600ms ease-out, exit 350-450ms ease-in).
 - **Reuse potential:** HIGH — every `Drawer` on this registry version has the identical missing-
-  exit-animation defect, not just this one. Worth promoting out of this screen if another one
+  animation defect on both edges, not just this one. Worth promoting out of this screen if another one
   gets built before the upstream fix lands.
 
 ## Dev-only state panel — ADDED

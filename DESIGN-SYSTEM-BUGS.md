@@ -367,64 +367,73 @@ to verify against.
 
 ---
 
-## 11. `@acko/drawer` opens too fast against the documented motion spec, and its close animation never plays at all
+## 11. `@acko/drawer` never actually plays either its open or its close transition
 
 **Severity:** High — this is the acko-motion-system equivalent of bug #2 (a documented spec with
 real, intended values that the shipped component simply doesn't follow), and it affects every
-`Drawer` on this registry version, not just this screen's coupon sheet.
+`Drawer` on this registry version, not just this screen's coupon sheet. Two distinct causes,
+same symptom: no visible easing on either edge of the interaction.
 
-**Cause — open duration:** `drawer.css`'s `.acko-drawer-open .acko-drawer` rule hardcodes
-`transition-duration: 350ms`. `acko-motion-system`'s `curves.md` defines `motion.surface.open`
-("bottom sheet, modal, drawer open") as **500-600ms, default 550ms, ease-out** — the component
-ships roughly 35% faster than the documented floor. `@acko/tokens` even has a real
-`--durationSlower: 500ms` primitive the component could reference and doesn't — it hardcodes a
-literal instead of using the token system at all for timing.
+**Cause — close never animates:** `drawer.css` defines a `.acko-drawer-closing .acko-drawer
+{ transition-duration: 280ms }` rule — clearly intended as the exit-animation counterpart to
+open, roughly matching `motion.surface.close`'s 350-450ms range. But `Drawer.js`'s React logic
+never applies that class: `if (!mounted || !open) return null` — the moment the consumer's
+`open` prop flips to `false`, the whole portal (backdrop + panel) is removed from the DOM on
+the same render, with no delay for any transition to play. The `.acko-drawer-closing` CSS is
+dead code, unreachable from the component's own logic.
 
-**Cause — close never animates:** this is the more visible half of "why does it pop out so
-fast." `drawer.css` also defines a `.acko-drawer-closing .acko-drawer { transition-duration:
-280ms }` rule — clearly intended as the exit-animation counterpart, roughly matching
-`motion.surface.close`'s 350-450ms range (a bit short, but in the right neighborhood). But
-`Drawer.js`'s React logic never applies that class: `if (!mounted || !open) return null` —
-the moment the consumer's `open` prop flips to `false`, the whole portal (backdrop + panel) is
-removed from the DOM on the same render, with no delay for any transition to play. The
-`.acko-drawer-closing` CSS is dead code, unreachable from the component's own logic.
+**Cause — open never animates either, for a different reason:** `drawer.css` hardcodes
+`.acko-drawer-open .acko-drawer { transition-duration: 350ms }` (also short of
+`curves.md`'s **500-600ms, default 550ms, ease-out** `motion.surface.open` spec — `@acko/tokens`
+even has a real `--durationSlower: 500ms` primitive the component ignores). But the duration
+was never the real blocker: `Drawer.js`'s own internal `mounted` state and the consumer's `open`
+prop both become `true` on the *same* render — there's no earlier frame where the portal exists
+in a "closed" state for the browser to transition *from*. A CSS `transition` only fires between
+two different painted states; here the very first paint of the panel already has class
+`acko-drawer-open` and `transform: matrix(1,0,0,1,0,0)` (fully open). Same mechanism silently
+kills the backdrop's opacity fade.
 
-**Confirmed via:** live-measured with a `MutationObserver` timestamped against
-`performance.now()` at the moment of clicking the close button. The `.acko-drawer-root` node
-was removed from the document in **~10-11ms** — consistent with a synchronous unmount, not a
-280ms (or any) transition. Also confirmed the open duration via `getComputedStyle`:
-`transitionDuration` was exactly `"0.35s"` before the fix below.
+**Confirmed via:** for close, a `MutationObserver` timestamped against `performance.now()`
+showed the `.acko-drawer-root` node removed in **~10-11ms** — consistent with a synchronous
+unmount, not any transition. For open, checked the panel the instant it first appears in the
+DOM after clicking the trigger: already `class="acko-drawer-root acko-drawer-open"` and
+`transform: matrix(1, 0, 0, 1, 0, 0)` on that very first read — confirmed the same for the
+backdrop (`opacity: "1"` immediately, never `"0"`).
 
-**Fix — open duration:** overridden directly in `src/index.css` (unlayered CSS beats the
-`layer(components)` import, same mechanism as the Cascade Layers fix at the top of that file):
+**Fix:** applied locally as `AnimatedDrawer` in `PlanDetails.tsx`, on request. Neither half is a
+CSS/token problem on its own — the close is the component's own React logic unmounting
+synchronously, and the open has nothing wrong with its declared duration/easing, just no
+"before" frame to animate from — so no `:root` alias or stylesheet override could fix either
+(that's normally as far as this project's fix pattern goes; see bugs #8 and #10, where a broken
+component was documented rather than patched, for the default when a fix would mean reaching
+past a component's own state machine). Here the wrapper does exactly that, deliberately, driving
+both edges itself via `Drawer`'s own forwarded ref rather than relying on its class-based CSS at
+all:
 
-```css
-.acko-drawer-open .acko-drawer {
-  transition-duration: var(--durationSlower);
-}
-```
+- **Close:** keeps `Drawer` mounted through the close (always passing it `open={true}`), pushes
+  an inline `transform: translateY(100%)` + `transition` onto the panel *and* `opacity: 0` +
+  `transition` onto the backdrop, and only lets the real unmount happen once that duration
+  elapses.
+- **Open:** on mount, snaps the panel/backdrop to their closed state with `transition: none`,
+  forces a reflow (`getBoundingClientRect()`) so the browser commits that frame, then on the
+  next animation frame sets the open state with a real `transition` — the standard technique for
+  forcing an enter transition when a component's own mount sequencing skips it.
 
-**Fix — close animation:** applied locally as `AnimatedDrawer` in `PlanDetails.tsx`, on request.
-This isn't a CSS/token problem — it's the component's own React logic unmounting synchronously
-— so no `:root` alias or stylesheet override could touch it on its own (that's as far as this
-project's usual fix pattern goes; see bugs #8 and #10, where a broken component was documented
-rather than patched, for the default when a fix would mean reaching past a component's own
-state machine). Here the wrapper does exactly that, deliberately: it keeps `Drawer` mounted
-through the close by always passing it `open={true}`, drives the panel's exit itself via
-`Drawer`'s own forwarded ref (an inline `transform: translateY(100%)` + `transition`), and only
-lets the real unmount happen after that transition's duration elapses. Timing and easing follow
-`transitions.md`'s "Surface enter and exit" table exactly — Drawer/Bottom sheet: enter
-500-600ms/exit 350-450ms, enter ease-out/exit ease-in — with `curves.md`'s default fixed value
-(400ms) for the exit. The exit curve is a stated approximation (`cubic-bezier(0.32, 0, 0.67,
-0)`), mirroring the shape of the real `--easeOutCubic` token in reverse, since no `--easeInCubic`
-token exists to reference.
+Timing and easing follow `transitions.md`'s "Surface enter and exit" table exactly for
+Drawer/Bottom sheet — enter 500-600ms ease-out, exit 350-450ms ease-in — with `curves.md`'s
+default fixed value (400ms) for the exit. Open's easing uses the real `--easeOutCubic` token
+as-is (`cubic-bezier(0.33, 1, 0.68, 1)`); close's is a stated approximation
+(`cubic-bezier(0.32, 0, 0.67, 0)`) mirroring that same curve's shape in reverse, since no
+`--easeInCubic` token exists to reference. The now-superseded open-duration CSS override that
+briefly lived in `src/index.css` was removed — it was harmless but permanently inert once the
+wrapper drives the transition via inline styles (inline always beats a class rule).
 
 **Verified here:** measured end-to-end inside the page (avoids cross-tool round-trip noise from
-separate tool calls, which inflated an early reading to ~1.2s): open's `transitionDuration` is
-`"0.5s"` with `--easeOutCubic`; on close, the panel's `transform` at the 200ms mark is a partial
-`translateY` (not snapped), the inline `transition` reads `"transform 400ms cubic-bezier(0.32, 0,
-0.67, 0)"`, and the node leaves the DOM at ~421ms — matching the documented 400ms exit almost
-exactly.
+separate tool calls, which inflated one early close reading to ~1.2s and would have made an
+open reading look falsely instant too). Open: panel `transform` moves smoothly from
+`translateY(338px)` to `0` and backdrop `opacity` from `0.23` to `1.0` over ~500ms. Close: panel
+moves from `0` to `translateY(316px)` and backdrop `opacity` from `1.0` to `0.28` over the same
+window, both still easing at the ~370ms mark, consistent with the 400ms exit.
 
 ---
 

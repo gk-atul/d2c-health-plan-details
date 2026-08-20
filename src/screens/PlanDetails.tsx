@@ -91,54 +91,104 @@ function Icon40({ icon: Cmp }: { icon: IconType }) {
   );
 }
 
-// ponytail: @acko/drawer's own close never plays (DESIGN-SYSTEM-BUGS.md bug
-// #11) — its React logic unmounts synchronously the instant `open` goes
-// false, so its own `.acko-drawer-closing` CSS (280ms) never gets a chance
-// to run. Wrapping it here to drive a real exit ourselves via its
-// forwarded ref (Drawer forwards to the actual `.acko-drawer` panel node):
-// keep it mounted through the close, push an inline transform+transition
-// onto that node, then unmount once it finishes.
+// ponytail: @acko/drawer's own open AND close transitions are both dead —
+// two distinct causes, same symptom ("no easing happening"), see
+// DESIGN-SYSTEM-BUGS.md bug #11 for the full trail:
 //
-// Duration follows acko-motion-system's own "Surface enter and exit" table
-// (transitions.md) exactly: Drawer/Bottom sheet is enter 500-600ms/exit
-// 350-450ms, enter ease-out/exit ease-in — matching curves.md's default
-// fixed values (Bottom sheet open 550ms rounds to the 500ms already used
-// for open in index.css; Surface close defaults to 400ms). The easing is
-// an approximation — there's no --easeInCubic in @acko/tokens to
-// reference, only --easeOutCubic (cubic-bezier(0.33, 1, 0.68, 1));
-// curves.md says to flag an invented bezier rather than pass it off as a
-// real token, so this mirrors that curve's shape for the reverse (ease-in)
-// direction instead of inventing something unrelated.
+// - Close: React logic unmounts synchronously the instant `open` goes
+//   false — its `.acko-drawer-closing` CSS (280ms) never gets a chance to
+//   run at all.
+// - Open: confirmed live by checking the panel the instant it appears —
+//   its very first paint already has class `acko-drawer-open` and
+//   `transform: matrix(1,0,0,1,0,0)` (fully open), because Drawer's own
+//   `mounted` state and the `open` prop both become true together on the
+//   same commit. A CSS transition needs two different painted frames to
+//   interpolate between; there's never a "closed" frame for the browser
+//   to animate *from*, so the 500ms/ease-out duration fix in index.css is
+//   real but never actually triggers. Same root issue hits the backdrop's
+//   opacity fade.
+//
+// Fix for both: drive the panel transform and backdrop opacity ourselves
+// via Drawer's forwarded ref, the standard way you force an enter
+// transition — snap to the starting state with transitions disabled,
+// force a reflow, then set the end state with a transition on the next
+// frame. Durations/easing follow transitions.md's "Surface enter and
+// exit" table for Drawer exactly: enter 500-600ms ease-out (matches the
+// real --easeOutCubic token, cubic-bezier(0.33, 1, 0.68, 1) — used as-is,
+// not approximated), exit 350-450ms ease-in (curves.md default 400ms; no
+// --easeInCubic token exists, so this is a stated approximation mirroring
+// --easeOutCubic's shape in reverse).
+const DRAWER_OPEN_DURATION_MS = 500;
+const DRAWER_OPEN_EASE = "var(--easeOutCubic)";
 const DRAWER_CLOSE_DURATION_MS = 400;
 const DRAWER_CLOSE_EASE_APPROXIMATION = "cubic-bezier(0.32, 0, 0.67, 0)";
 
 function AnimatedDrawer({ open, onClose, ...rest }: DrawerProps) {
   const [mounted, setMounted] = useState(open);
   const panelRef = useRef<HTMLDivElement>(null);
+  const openAnimatedRef = useRef(false);
 
   useEffect(() => {
     if (open) {
       setMounted(true);
+      openAnimatedRef.current = false;
       return;
     }
     if (!mounted) return;
     const panel = panelRef.current;
+    const backdrop = panel?.parentElement?.querySelector<HTMLElement>(".acko-drawer-backdrop");
     if (panel) {
       panel.style.transition = `transform ${DRAWER_CLOSE_DURATION_MS}ms ${DRAWER_CLOSE_EASE_APPROXIMATION}`;
       panel.style.transform = "translateY(100%)";
+    }
+    if (backdrop) {
+      backdrop.style.transition = `opacity ${DRAWER_CLOSE_DURATION_MS}ms ${DRAWER_CLOSE_EASE_APPROXIMATION}`;
+      backdrop.style.opacity = "0";
     }
     const timeout = window.setTimeout(() => setMounted(false), DRAWER_CLOSE_DURATION_MS);
     return () => window.clearTimeout(timeout);
   }, [open, mounted]);
 
   useEffect(() => {
-    // Clear any leftover inline close-transform on reopen so @acko/drawer's
-    // own (already-fixed) 500ms open transition takes over cleanly.
-    if (open && panelRef.current) {
-      panelRef.current.style.transition = "";
-      panelRef.current.style.transform = "";
-    }
-  }, [open]);
+    if (!mounted || !open || openAnimatedRef.current) return;
+    let cancelled = false;
+    let rafId = 0;
+
+    const armEnterTransition = () => {
+      if (cancelled) return;
+      const panel = panelRef.current;
+      if (!panel) {
+        rafId = requestAnimationFrame(armEnterTransition);
+        return;
+      }
+      const backdrop = panel.parentElement?.querySelector<HTMLElement>(".acko-drawer-backdrop");
+      openAnimatedRef.current = true;
+      panel.style.transition = "none";
+      panel.style.transform = "translateY(100%)";
+      if (backdrop) {
+        backdrop.style.transition = "none";
+        backdrop.style.opacity = "0";
+      }
+      // Force a reflow so the browser commits the "closed" starting frame
+      // before the next style change, or the two would collapse into one
+      // paint and the transition still wouldn't play.
+      panel.getBoundingClientRect();
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        panel.style.transition = `transform ${DRAWER_OPEN_DURATION_MS}ms ${DRAWER_OPEN_EASE}`;
+        panel.style.transform = "translateY(0)";
+        if (backdrop) {
+          backdrop.style.transition = `opacity ${DRAWER_OPEN_DURATION_MS}ms ${DRAWER_OPEN_EASE}`;
+          backdrop.style.opacity = "1";
+        }
+      });
+    };
+    rafId = requestAnimationFrame(armEnterTransition);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+    };
+  }, [mounted, open]);
 
   if (!mounted) return null;
   return <Drawer ref={panelRef} open onClose={onClose} {...rest} />;
