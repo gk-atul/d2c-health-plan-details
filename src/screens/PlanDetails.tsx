@@ -23,7 +23,6 @@ import {
   Medicine,
   TriangleWarning,
   Cloud,
-  Discount,
 } from "@acko/icons";
 import CoverageShieldIllustration from "../assets/illustrations/coverage-shield.svg";
 
@@ -55,13 +54,6 @@ const NOT_COVERED_ITEMS: { Icon: IconType; label: string }[] = [
 
 // icon size wrapper — @acko/icons ship as 1em SVGs and must be sized via a
 // wrapper span (iconography.md), never width/height props.
-function Icon16({ icon: Cmp }: { icon: IconType }) {
-  return (
-    <span className="inline-flex size-16 shrink-0 [&_svg]:size-full" aria-hidden="true">
-      <Cmp aria-hidden="true" />
-    </span>
-  );
-}
 function Icon24({ icon: Cmp }: { icon: IconType }) {
   return (
     <span className="inline-flex size-24 shrink-0 [&_svg]:size-full" aria-hidden="true">
@@ -684,30 +676,33 @@ export function PlanDetails() {
                 directly or picked from the browse sheet below — both paths
                 validate against the same AVAILABLE_COUPONS list. */}
             {couponStatus === "applied" ? (
-              // cards.md's slot vocabulary: secondary-cta -> Button
-              // variant="ghost" (not "link" — that's why Change and Remove
-              // read as identical). "Change" reuses the link treatment
-              // from "Browse coupons" above since it's the same action;
-              // "Remove" gets the ghost pill so it reads as the distinct,
-              // lesser action. Row stacks on mobile, goes inline at sm+ —
-              // layout.md's "Side-by-side CTAs: stacked full width (mobile)
-              // / inline (tablet+)" — so a wrapped label never fights a
-              // cramped button row.
-              <div className="flex w-full flex-col gap-8 text-left sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-8">
-                  <Icon16 icon={Discount} />
-                  <Typography as="p" scale="sm" emphasis="medium">
-                    Code "{couponCode.trim().toUpperCase()}" applied
+              // Rebuilt around a component the earlier version missed
+              // entirely: @acko/badge's real removable/onRemove prop — a
+              // self-contained dismissible chip with its own "x", not
+              // documented in cards.md but confirmed real in the shipped
+              // component. cards.md's CommerceCard slots don't give an
+              // illustrated layout, only an abstract table (title,
+              // secondary-cta "Remove for applied state") — no code
+              // example to copy verbatim — so this composes from that
+              // table using the same Badge already used for each coupon's
+              // code in the browse sheet below, which is why it's the
+              // more correct fit: applying a coupon now visually resolves
+              // to the same chip you tapped "Apply" on. "Change" isn't a
+              // documented CommerceCard slot at all (this screen's own
+              // addition) — kept as a small, clearly-secondary link below
+              // the chip rather than a second same-weight button beside it.
+              <div className="flex w-full flex-col items-start gap-8 text-left">
+                <div className="flex w-full items-center justify-between gap-12">
+                  <Typography as="p" scale="sm" color="secondary">
+                    Coupon applied
                   </Typography>
+                  <Badge color="purple" textCase="uppercase" removable onRemove={removeCoupon}>
+                    {couponCode.trim().toUpperCase()}
+                  </Badge>
                 </div>
-                <div className="flex shrink-0 items-center justify-end gap-12">
-                  <Button variant="link" size="sm" onClick={() => setCouponSheetOpen(true)}>
-                    Change
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={removeCoupon}>
-                    Remove
-                  </Button>
-                </div>
+                <Button variant="link" size="sm" onClick={() => setCouponSheetOpen(true)}>
+                  Change coupon
+                </Button>
               </div>
             ) : (
               <div className="w-full text-left">

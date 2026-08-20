@@ -462,14 +462,63 @@ would be a compile error, not a silent runtime fallback.
 
 **Found while investigating:** the coupon-applied row's "Change" and "Remove" actions were both
 `Button variant="link"` — visually identical, which is exactly what happens when the
-`secondary-cta` slot rule (`variant="ghost"`, distinct from a plain link) isn't followed.
-Fixed here: "Remove" (the documented `secondary-cta` for `CommerceCard`'s applied state) now
-uses `variant="ghost"`; "Change" (not part of the documented pattern — added for this screen's
-own re-pick flow) keeps `variant="link"`, matching the "Browse coupons" link it mirrors. Also
-restacked the row per `layout.md`'s "Side-by-side CTAs: stacked full width (mobile) / inline
-(tablet+)" rule — the label and the two actions were competing for space on one line at mobile
-widths, which is what made the pairing feel cramped on top of looking identical. Verified at
-400px (stacked: label row, then a right-aligned actions row) and 1400px (single inline row).
+`secondary-cta` slot rule (`variant="ghost"`, distinct from a plain link) isn't followed. First
+fix attempt kept the same custom flex-row shape and just swapped Remove to `variant="ghost"`
+plus made the row stack on mobile per `layout.md`'s "Side-by-side CTAs" rule — better, but still
+visibly a hand-built row, not a real pattern.
+
+**Superseded by a better fit:** re-challenged on whether the right components were even being
+used, re-read `cards.md`'s CommerceCard section end to end — it only gives an abstract slot
+table (`title`, `secondary-cta`: "Remove for applied state"), no illustrated layout to copy. But
+checking the real `@acko/badge` component (not documented in `cards.md` at all) turned up a
+built-in `removable`/`onRemove` prop — a self-contained dismissible chip with its own "×",
+confirmed real by reading `Badge.js`'s render output. That's the actual right fit for "applied
+code with a way to remove it," and it reuses the *same* `Badge` already shown for each coupon's
+code in the browse sheet, so applying a coupon now visually resolves to the same chip you tapped
+"Apply" on. Final shape: small secondary label ("Coupon applied") + `Badge removable` holding
+the code, with "Change coupon" (not a documented slot at all — this screen's own addition) as a
+distinctly smaller `variant="link"` underneath rather than a second same-weight action beside it.
+Verified live: the badge's own `×` calls `removeCoupon` correctly, "Change coupon" reopens the
+browse sheet with the current code shown as "Applied" in the list.
+
+---
+
+## 13. `@acko/icons`' own type declarations don't type-check in a consuming project — and this project's `tsc` checks had been silently checking nothing
+
+**Severity:** Medium — no runtime impact (confirmed the app has rendered every icon correctly
+all session), but `npx tsc --noEmit` alone is meaningless here: the root `tsconfig.json` has
+`"files": []` and only `references` the real sub-projects, so it checks zero files and reports
+zero errors regardless of what's actually broken. Every "clean type-check" claimed earlier in
+this project's history needs to be read as "no `.ts`/`.tsx` files were type-checked," not "no
+errors exist." The real command is `npx tsc --noEmit -p tsconfig.app.json`.
+
+**Cause:** running it for real surfaces 15 pre-existing errors, all `error TS2322: Type
+'string' is not assignable to type 'IconType'` at every `<Icon24 icon={SomeName} />`-style call
+site. `@acko/icons`' shipped `index.d.ts` derives each icon's type from a relative import —
+`import { default as Hospital } from './svgs/outlined/Hospital.svg'` — which only type-checks
+correctly if the *consumer's* `tsconfig` has a `.svg` module declaration that types the default
+export as a component. This project's `vite-env.d.ts` only referenced `vite/client` (which
+types `*.svg` as `string`, the plain-asset-URL case); referencing `vite-plugin-svgr/client` — the
+obvious next thing to try — doesn't fix it either, because that shim only covers the
+`*.svg?react` query-suffixed import pattern (`vite-plugin-svgr@4.5.0`'s own default `include`),
+and `@acko/icons`' `.d.ts` imports plain `.svg`, no suffix. Checking the package's actual
+shipped JS (`quark-icons.esm*.js`) shows why this was never caught: the runtime is pre-built —
+it doesn't import raw `.svg` files at all, so Vite's dev server never touches this path and the
+type/runtime mismatch is invisible unless you run the type checker against the right project.
+
+**Confirmed via:** `npx tsc --noEmit -p tsconfig.app.json` (15 identical errors, one per icon
+call site); reading `@acko/icons/dist/index.d.ts`'s import lines; reading
+`vite-plugin-svgr/dist/index.js`'s default `include = "**/*.svg?react"`; confirming
+`@acko/icons/dist/` ships only pre-built `quark-icons.esm*.js` bundles, no raw `.svg` re-exports
+at runtime.
+
+**Fix:** none applied to the icon typing itself — this is a packaging defect in `@acko/icons`'
+own `.d.ts` (it leaks a build-time-only import path into its public type surface), not something
+fixable by changing this consumer's module augmentation without risking a conflicting ambient
+declaration for the same `*.svg` wildcard `vite/client` already owns. Added the
+`vite-plugin-svgr/client` reference to `vite-env.d.ts` anyway since it's harmless and correct for
+any future `*.svg?react` import in this project's own code — but it does not resolve these 15
+errors, and that should be called out for whoever picks this up rather than left implied.
 
 ---
 
