@@ -1,3 +1,18 @@
+## Dev-only state panel — ADDED
+- **Why:** loading/error/offline previously required temporarily editing source code to see
+  (what was done to verify them originally) — not something to do live in a demo. Offline was
+  demoable via real browser devtools; loading and error weren't demoable at all without a
+  code change.
+- **What it is:** a small floating panel (`DevStatusPanel`), bottom-right, four buttons
+  (loading/error/offline/success) that force `usePlanDetailsStatus` into that state on click.
+  Loading holds indefinitely once forced instead of auto-resolving after 900ms, so it's
+  actually presentable rather than a 900ms flash.
+- **Never ships:** gated on `import.meta.env.DEV`, which Vite statically replaces and
+  dead-code-eliminates in production builds — confirmed this is the standard, safe pattern
+  for exactly this need, not a custom flag that could accidentally leak.
+- **Verified live:** clicked through all 4 states in sequence (loading → error → loading held
+  → success), no console errors, panel persists correctly across every screen.
+
 ## Responsive scaling: page was mobile-only, fixed at 430px on every viewport — RESOLVED
 - **Found via:** direct question, verified empirically before assuming — at a 1440px window,
   the content stayed locked at `max-w-[430px]` with **505px of dead gray space on each side**.

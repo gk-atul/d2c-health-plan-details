@@ -170,7 +170,39 @@ function usePlanDetailsStatus() {
     };
   }, [attempt]);
 
-  return { status, retry: attempt };
+  return { status, retry: attempt, forceStatus: setStatus };
+}
+
+// Dev-only control for demoing loading/error/offline without editing code —
+// import.meta.env.DEV is statically replaced and dead-code-eliminated by
+// Vite in production builds, so this never ships. Loading is held
+// indefinitely once forced (the real 900ms timer underneath is irrelevant
+// while an override is active) so it's actually showable, not a 900ms flash.
+function DevStatusPanel({ onSet }: { onSet: (status: PageStatus) => void }) {
+  if (!import.meta.env.DEV) return null;
+  return (
+    <div
+      className="fixed bottom-16 right-16 z-50 flex gap-8 rounded-2xl border border-dashed p-8"
+      style={{ background: "var(--surfaceStaticWhite)", borderColor: "var(--borderDefault)" }}
+    >
+      <Typography as="span" scale="xs" color="secondary" className="self-center pl-4">
+        DEV
+      </Typography>
+      {(["loading", "error", "offline", "success"] as const).map((s) => (
+        <button
+          key={s}
+          type="button"
+          onClick={() => onSet(s)}
+          className="rounded-lg px-8 py-4"
+          style={{ background: "var(--surfaceFillSubtle)" }}
+        >
+          <Typography as="span" scale="xs">
+            {s}
+          </Typography>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // Full-page skeleton — dimensions mirror the real layout section-for-section
@@ -274,7 +306,7 @@ function StatusScreen({
 }
 
 export function PlanDetails() {
-  const { status, retry } = usePlanDetailsStatus();
+  const { status, retry, forceStatus } = usePlanDetailsStatus();
   const [tab, setTab] = useState<string | string[]>("covered");
   const [heroImageFailed, setHeroImageFailed] = useState(false);
 
@@ -282,6 +314,7 @@ export function PlanDetails() {
     return (
       <div style={{ background: "var(--surfaceBase)" }} className="min-h-screen">
         <PlanDetailsSkeleton />
+        <DevStatusPanel onSet={forceStatus} />
       </div>
     );
   }
@@ -295,6 +328,7 @@ export function PlanDetails() {
           body="Check your internet connection — we'll reconnect automatically, or try again now."
           onRetry={retry}
         />
+        <DevStatusPanel onSet={forceStatus} />
       </div>
     );
   }
@@ -308,6 +342,7 @@ export function PlanDetails() {
           body="We couldn't load this plan's details. Please try again."
           onRetry={retry}
         />
+        <DevStatusPanel onSet={forceStatus} />
       </div>
     );
   }
@@ -498,6 +533,7 @@ export function PlanDetails() {
           </div>
         </Card>
       </div>
+      <DevStatusPanel onSet={forceStatus} />
     </div>
   );
 }
