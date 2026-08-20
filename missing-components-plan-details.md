@@ -1,3 +1,26 @@
+## AnimatedDrawer
+- **Type:** VARIANT-GAP
+- **Screen:** plan-details (coupon browse sheet in the Premium details card)
+- **What it is:** a thin local wrapper around the real `Drawer` (`@acko/drawer`) that plays an
+  actual exit animation when the coupon sheet closes.
+- **Closest @acko component:** `Drawer` (`@acko/drawer`)
+- **Why it didn't fit:** `Drawer`'s own React logic (`if (!mounted || !open) return null`)
+  unmounts synchronously the instant `open` goes false — its own `.acko-drawer-closing` CSS
+  (280ms) exists in the stylesheet but is never reachable from the component's own state
+  machine. See `DESIGN-SYSTEM-BUGS.md` bug #11 for the full investigation (also covers a
+  hardcoded-too-fast open duration, fixed the normal way via CSS override). The close half of
+  that bug can't be fixed with a token alias or stylesheet override since it's a JS-level defect,
+  not a styling one.
+- **Props sketch:** identical to `DrawerProps` (`open`, `onClose`, `side`, `size`, `title`,
+  `children`, ...) — same call-site shape as the real component, just re-exported locally.
+  Internally keeps `Drawer` mounted (always passing it `open={true}`) through the close, drives
+  the panel's exit itself via `Drawer`'s own forwarded ref (inline `transform`/`transition`
+  matching `transitions.md`'s documented 400ms ease-in exit), then unmounts for real once that
+  finishes.
+- **Reuse potential:** HIGH — every `Drawer` on this registry version has the identical missing-
+  exit-animation defect, not just this one. Worth promoting out of this screen if another one
+  gets built before the upstream fix lands.
+
 ## Dev-only state panel — ADDED
 - **Why:** loading/error/offline previously required temporarily editing source code to see
   (what was done to verify them originally) — not something to do live in a demo. Offline was

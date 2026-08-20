@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ComponentType, type SVGProps } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType, type SVGProps } from "react";
 import { Typography } from "@acko/typography";
 import { Button } from "@acko/button";
 import { Card } from "@acko/card";
@@ -7,7 +7,7 @@ import { ToggleGroup, ToggleGroupItem } from "@acko/toggle";
 import { Separator } from "@acko/separator";
 import { Skeleton } from "@acko/skeleton";
 import { TextInput } from "@acko/text-input";
-import { Drawer } from "@acko/drawer";
+import { Drawer, type DrawerProps } from "@acko/drawer";
 import {
   ArrowLeft,
   Hospital,
@@ -89,6 +89,59 @@ function Icon40({ icon: Cmp }: { icon: IconType }) {
       <Cmp aria-hidden="true" />
     </span>
   );
+}
+
+// ponytail: @acko/drawer's own close never plays (DESIGN-SYSTEM-BUGS.md bug
+// #11) — its React logic unmounts synchronously the instant `open` goes
+// false, so its own `.acko-drawer-closing` CSS (280ms) never gets a chance
+// to run. Wrapping it here to drive a real exit ourselves via its
+// forwarded ref (Drawer forwards to the actual `.acko-drawer` panel node):
+// keep it mounted through the close, push an inline transform+transition
+// onto that node, then unmount once it finishes.
+//
+// Duration follows acko-motion-system's own "Surface enter and exit" table
+// (transitions.md) exactly: Drawer/Bottom sheet is enter 500-600ms/exit
+// 350-450ms, enter ease-out/exit ease-in — matching curves.md's default
+// fixed values (Bottom sheet open 550ms rounds to the 500ms already used
+// for open in index.css; Surface close defaults to 400ms). The easing is
+// an approximation — there's no --easeInCubic in @acko/tokens to
+// reference, only --easeOutCubic (cubic-bezier(0.33, 1, 0.68, 1));
+// curves.md says to flag an invented bezier rather than pass it off as a
+// real token, so this mirrors that curve's shape for the reverse (ease-in)
+// direction instead of inventing something unrelated.
+const DRAWER_CLOSE_DURATION_MS = 400;
+const DRAWER_CLOSE_EASE_APPROXIMATION = "cubic-bezier(0.32, 0, 0.67, 0)";
+
+function AnimatedDrawer({ open, onClose, ...rest }: DrawerProps) {
+  const [mounted, setMounted] = useState(open);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      return;
+    }
+    if (!mounted) return;
+    const panel = panelRef.current;
+    if (panel) {
+      panel.style.transition = `transform ${DRAWER_CLOSE_DURATION_MS}ms ${DRAWER_CLOSE_EASE_APPROXIMATION}`;
+      panel.style.transform = "translateY(100%)";
+    }
+    const timeout = window.setTimeout(() => setMounted(false), DRAWER_CLOSE_DURATION_MS);
+    return () => window.clearTimeout(timeout);
+  }, [open, mounted]);
+
+  useEffect(() => {
+    // Clear any leftover inline close-transform on reopen so @acko/drawer's
+    // own (already-fixed) 500ms open transition takes over cleanly.
+    if (open && panelRef.current) {
+      panelRef.current.style.transition = "";
+      panelRef.current.style.transform = "";
+    }
+  }, [open]);
+
+  if (!mounted) return null;
+  return <Drawer ref={panelRef} open onClose={onClose} {...rest} />;
 }
 
 // Shared row list for both covered and not-covered tabs — same icon+label+
@@ -626,7 +679,7 @@ export function PlanDetails() {
               </div>
             )}
 
-            <Drawer
+            <AnimatedDrawer
               open={couponSheetOpen}
               onClose={() => setCouponSheetOpen(false)}
               side="bottom"
@@ -669,7 +722,7 @@ export function PlanDetails() {
                   );
                 })}
               </div>
-            </Drawer>
+            </AnimatedDrawer>
           </div>
         </Card>
       </div>

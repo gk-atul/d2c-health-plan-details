@@ -404,19 +404,27 @@ was removed from the document in **~10-11ms** — consistent with a synchronous 
 }
 ```
 
-**Fix — close animation:** not applied. This isn't a CSS/token problem — it's the component's
-own React logic unmounting synchronously — so no `:root` alias or stylesheet override can touch
-it. Properly fixing it upstream means `Drawer.js` deferring the actual unmount until its own
-`.acko-drawer-closing` transition finishes (the CSS for this already exists and is the right
-shape, it's just never triggered). A local workaround is possible — wrap `Drawer`, keep it
-mounted an extra ~400ms on close, and drive the panel's exit transform imperatively via its
-forwarded ref — but that means reaching past the component's own state machine from the outside,
-which this project has consistently avoided doing (see bugs #8 and #10, where a broken component
-was documented rather than patched). Flagging for the design-systems team rather than shipping
-that workaround unasked.
+**Fix — close animation:** applied locally as `AnimatedDrawer` in `PlanDetails.tsx`, on request.
+This isn't a CSS/token problem — it's the component's own React logic unmounting synchronously
+— so no `:root` alias or stylesheet override could touch it on its own (that's as far as this
+project's usual fix pattern goes; see bugs #8 and #10, where a broken component was documented
+rather than patched, for the default when a fix would mean reaching past a component's own
+state machine). Here the wrapper does exactly that, deliberately: it keeps `Drawer` mounted
+through the close by always passing it `open={true}`, drives the panel's exit itself via
+`Drawer`'s own forwarded ref (an inline `transform: translateY(100%)` + `transition`), and only
+lets the real unmount happen after that transition's duration elapses. Timing and easing follow
+`transitions.md`'s "Surface enter and exit" table exactly — Drawer/Bottom sheet: enter
+500-600ms/exit 350-450ms, enter ease-out/exit ease-in — with `curves.md`'s default fixed value
+(400ms) for the exit. The exit curve is a stated approximation (`cubic-bezier(0.32, 0, 0.67,
+0)`), mirroring the shape of the real `--easeOutCubic` token in reverse, since no `--easeInCubic`
+token exists to reference.
 
-**Verified here:** open duration now measures `0.5s` via `getComputedStyle` — confirmed live
-after the fix. Close timing is unchanged (~10ms) and still open.
+**Verified here:** measured end-to-end inside the page (avoids cross-tool round-trip noise from
+separate tool calls, which inflated an early reading to ~1.2s): open's `transitionDuration` is
+`"0.5s"` with `--easeOutCubic`; on close, the panel's `transform` at the 200ms mark is a partial
+`translateY` (not snapped), the inline `transition` reads `"transform 400ms cubic-bezier(0.32, 0,
+0.67, 0)"`, and the node leaves the DOM at ~421ms — matching the documented 400ms exit almost
+exactly.
 
 ---
 
