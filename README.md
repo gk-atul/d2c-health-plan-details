@@ -1,4 +1,4 @@
-# acko-design-to-code
+# d2c-health-plan-details
 
 Push designs directly into ACKO's codebase: wireframe → (optional) Figma refinement → code.
 
@@ -33,8 +33,10 @@ to reinstall (`npm install`).
 3. `acko-motion-system` kicks in for anything animated (transitions, loading states, micro-interactions).
 4. `npm run dev` to preview the screen against real components.
 
-## Not set up yet (add when needed)
+## Status
 
-- **No Figma MCP connection** — no live Figma pull, just static exports for now.
-- **No target repo** — this is still a standalone project. Once you pick which ACKO repo
-  this feeds, this is the point where generated screens get moved/merged into it.
+- Figma's Dev Mode MCP is connected — see `DESIGN-SYSTEM-BUGS.md` and
+  `missing-components-plan-details.md` for how it's been used so far.
+- First screen built end-to-end: `src/screens/PlanDetails.tsx` — full state handling
+  (loading/error/offline), responsive across mobile/tablet/desktop, 6 confirmed
+  design-system bugs found and logged for the design-systems team.
