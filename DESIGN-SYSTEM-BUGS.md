@@ -254,6 +254,42 @@ centered labels in the Premium details card. Verified via `getComputedStyle` (`t
 
 ---
 
+## 8. `@acko/surface`'s `secondary`/`static`/`brand`/`inverted` variants are unstyled — undefined fill and border tokens
+
+**Severity:** High — the component's entire purpose (page-level "visual relief, section
+differentiation" per `cards.md` Part 0) silently fails; it renders with no fill at all.
+
+**Cause:** the shipped `surface.css` reads `--surfaceBasePrimary` and `--surfaceBaseSecondary`
+for the `primary`/`secondary` variant fills — neither exists in `@acko/tokens` (0 matches each).
+`--cardBorderSecondary`, used for the `static-black`/`static-white`/`brand`/`brand-light`/
+`inverted` variant borders, is undefined too. Unlike bugs #4–#6, this isn't even a legacy-name
+issue — `cards.md`'s own doc table already names the *correct* tokens (`--surfaceFillDefault`,
+`--surfaceSecondaryBg`), so the component's CSS drifted from both the docs and the token
+package it ships alongside.
+
+**Confirmed via:** `grep -c` against `@acko/tokens/src/{tokens,theme}.css` — `--surfaceBasePrimary`
+and `--surfaceBaseSecondary`: 0 matches; `--surfaceFillDefault`: 2, `--surfaceSecondaryBg`: 1.
+Live-verified: an element with `background: var(--surfaceBaseSecondary)` resolves via
+`getComputedStyle` to `rgba(0, 0, 0, 0)` — fully transparent, indistinguishable from the page
+background.
+
+**Fix:** alias the undefined names to the real tokens `cards.md` already documents:
+
+| Undefined (shipped CSS) | Real equivalent |
+|---|---|
+| `--surfaceBasePrimary` | `--surfaceFillDefault` |
+| `--surfaceBaseSecondary` | `--surfaceSecondaryBg` |
+| `--cardBorderSecondary` | needs design-systems input — no obvious 1:1 semantic match found yet |
+
+**Not yet applied locally** — found while checking whether the design system has a rule/
+component for encasing the "What to know before you buy" section in a differentiated container
+(it does: `<Surface variant="secondary">`), before actually wrapping anything. Holding off on
+using it on this screen until either the upstream tokens are fixed or a local alias is added,
+per the standing rule of never shipping a component that only "looks right" by CSS-fallback
+accident.
+
+---
+
 ## Also worth reconciling (not a bug, a docs/registry mismatch)
 
 `cards.md`'s catalog and the missing-components protocol both list `Tabs`, `Table`,
