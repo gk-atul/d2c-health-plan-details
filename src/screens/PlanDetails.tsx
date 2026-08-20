@@ -715,7 +715,17 @@ export function PlanDetails() {
                     if (couponStatus === "invalid") setCouponStatus("idle");
                   }}
                   error={couponStatus === "invalid"}
-                  errorText={couponStatus === "invalid" ? "That code isn't valid" : undefined}
+                  // forms-controls.md: error copy must be specific to the
+                  // actual scenario ("Enter a 10-digit mobile number", not
+                  // "Invalid phone number") — empty field and wrong code
+                  // are different scenarios and shouldn't share one message.
+                  errorText={
+                    couponStatus === "invalid"
+                      ? couponCode.trim() === ""
+                        ? "Enter a valid code"
+                        : "That code isn't valid"
+                      : undefined
+                  }
                   suffix={
                     <Button variant="link" size="sm" onClick={applyCoupon}>
                       Apply
