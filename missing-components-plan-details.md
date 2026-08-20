@@ -187,5 +187,11 @@
 - All icons used `width`/`height` props — iconography.md's explicit anti-pattern (`@acko/icons` ships `1em` SVGs, must be sized via a `size-{16|24|32}` wrapper span). Fixed throughout.
 - "Sum insured"/"Premium" labels used forced `uppercase` className — typography.md: all-caps outside `Badge` is a named anti-pattern. Removed, now plain sentence-case small labels.
 
+## Judgment call: coupon browse sheet uses Drawer at every breakpoint, not Dialog on desktop
+- **Type:** Not a missing component — pure composition of real components (`Drawer`, `TextInput`, `Card`, `Badge`, `Button`), no custom shell built. Logged anyway since it's a deliberate deviation from a documented rule.
+- **What the rule says:** `responsiveness.md`'s component-downshift table: centered `Dialog` on desktop, `Drawer side="bottom"` (bottom sheet) on mobile — "must be the actual component, not a squeezed-down modal."
+- **Why it wasn't followed exactly:** checked `@acko/dialog`'s CSS before wiring up the desktop variant and found 9 undefined tokens covering nearly the whole component (panel fill, backdrop, both text colors, footer border, shadow, hover state, open-animation easing) — see `DESIGN-SYSTEM-BUGS.md` bug #10. Fixing all of it just to open a 3-item coupon list felt disproportionate; `@acko/drawer` needed only 2 token aliases and renders correctly, so it's used as the single implementation across all breakpoints instead.
+- **Reuse potential:** if `@acko/dialog` gets fixed upstream, this is the place to add the desktop-centered variant back in for `responsiveness.md` compliance.
+
 ## Registry note (not page-specific, flagging anyway)
 The missing-components protocol's "available components" list names `Table`, `Tabs`, `Tooltip`, `Field`, `Pagination`, `NavigationWizard` as available. None of these are actually published in the installed `@acko/*` registry (v3.0.4) — `package.json`/`node_modules` only has 30 packages, and those six aren't among them, despite `@acko/css` shipping stylesheets for some of them (`tabs.css`, `table.css`). Used `@acko/toggle`'s `ToggleGroup`/`ToggleGroupItem` in place of the advertised `Tabs` for the covered/not-covered segmented control — works, but worth reconciling the protocol doc against the real registry.

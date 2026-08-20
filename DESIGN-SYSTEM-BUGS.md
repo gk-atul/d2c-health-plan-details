@@ -320,6 +320,53 @@ discount code) renders the red error gradient and error helper text correctly.
 
 ---
 
+## 10. `@acko/dialog` ships with 9 undefined tokens — `@acko/drawer` with 2
+
+**Severity:** High for `@acko/dialog` — its panel background, backdrop, both text colors,
+footer border, shadow, hover state, and open animation all read undefined tokens, meaning the
+component is close to non-functional as shipped. Low for `@acko/drawer` — only its box-shadow
+and focus ring are affected; panel background and text color use real tokens and render fine.
+
+**Cause — `@acko/dialog`** (`dialog.css`): `--colorSurfaceOverlay` (backdrop),
+`--colorSurfaceRaised` / `--colorSurfaceRaisedHover` (panel fill / close-button hover),
+`--colorTextDefault` / `--colorTextSecondary` (title, description, body, close-icon color),
+`--colorBorderSubtle` (footer border), `--shadowLg` (panel shadow), `--easeOutQuart` (open
+animation easing) — all confirmed undefined (0 matches in `@acko/tokens`). Same legacy
+`--color*` naming pattern as bugs #4/#5/#6, but far more of the component is affected this time.
+
+**Cause — `@acko/drawer`** (`drawer.css`): `--shadowModal` (panel shadow) and
+`--shadowFocusRing` (close-button focus ring) — both undefined. Everything else in `drawer.css`
+(panel fill `--surfaceFillDefault`, text `--textPrimary`, backdrop `--surfaceOverlay`) uses real,
+correctly-named tokens and renders correctly.
+
+**Confirmed via:** found while adding a "browse available coupons" bottom sheet to the Premium
+details card (`responsiveness.md`'s documented modal → bottom-sheet downshift). Considered
+`Dialog` for the desktop/centered variant of that same pattern; `grep -c` against
+`@acko/tokens/src/{tokens,theme}.css` turned up the 9 undefined names above before it was ever
+rendered.
+
+**Fix:**
+
+| Undefined (shipped CSS) | Real equivalent | Applied here? |
+|---|---|---|
+| `@acko/drawer` `--shadowModal` | `--shadowXl` (`shadows.md`: "Modals, dialogs") | Yes |
+| `@acko/drawer` `--shadowFocusRing` | `0 0 0 2px var(--borderFocus)` — the exact shape `@acko/surface` already inlines for its own focus ring (bug #8) | Yes |
+| `@acko/dialog` `--colorSurfaceOverlay` | `--surfaceOverlay` | No |
+| `@acko/dialog` `--colorSurfaceRaised` / `--colorSurfaceRaisedHover` | `--surfaceRaised` / needs a real hover token, none obviously matches | No |
+| `@acko/dialog` `--colorTextDefault` / `--colorTextSecondary` | `--textPrimary` / `--textSecondary` | No |
+| `@acko/dialog` `--colorBorderSubtle` | `--borderSoft` (closest by name; needs design-systems confirmation) | No |
+| `@acko/dialog` `--shadowLg` | `--shadowL` (casing differs — `L` not `Lg`) | No |
+| `@acko/dialog` `--easeOutQuart` | no `Quart` easing curve exists in the primitive set; needs a real value from design-systems | No |
+
+**Fixed and verified here:** only `@acko/drawer`'s two tokens, since this screen ended up using
+`Drawer side="bottom"` for the coupon sheet at every breakpoint rather than switching to `Dialog`
+on desktop. That's a deliberate scope call, not full compliance with the modal/bottom-sheet
+downshift rule — see `missing-components-plan-details.md`. `@acko/dialog`'s tokens are listed
+above for the design-systems team but not aliased locally, since nothing on this screen uses it
+to verify against.
+
+---
+
 ## Also worth reconciling (not a bug, a docs/registry mismatch)
 
 `cards.md`'s catalog and the missing-components protocol both list `Tabs`, `Table`,

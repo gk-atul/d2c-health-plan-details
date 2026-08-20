@@ -7,6 +7,7 @@ import { ToggleGroup, ToggleGroupItem } from "@acko/toggle";
 import { Separator } from "@acko/separator";
 import { Skeleton } from "@acko/skeleton";
 import { TextInput } from "@acko/text-input";
+import { Drawer } from "@acko/drawer";
 import {
   ArrowLeft,
   Hospital,
@@ -27,6 +28,14 @@ import {
 import CoverageShieldIllustration from "../assets/illustrations/coverage-shield.svg";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
+
+// cards.md §8 CommerceCard's "coupon-input" source list — the codes a
+// customer can browse and apply, rather than needing to know one by heart.
+const AVAILABLE_COUPONS: { code: string; title: string; body: string }[] = [
+  { code: "DISCOUNT", title: "Flat ₹500 off your premium", body: "Valid on all health plans, no minimum purchase." },
+  { code: "FAMILY5", title: "5% off family floater plans", body: "Applies when the plan covers 3 or more members." },
+  { code: "WELCOME10", title: "10% off your first ACKO policy", body: "For new customers buying their first plan with us." },
+];
 
 const COVERED_ITEMS: { Icon: IconType; label: string }[] = [
   { Icon: Hospital, label: "100% hospital bill payment" },
@@ -320,14 +329,23 @@ export function PlanDetails() {
   const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   // Discount code — cards.md §8 CommerceCard's coupon-input/coupon-applied
-  // variants. Only "DISCOUNT" (case-insensitive) is treated as valid, per
-  // the fixed demo code requested for this screen.
+  // variants. Valid codes are whatever's in AVAILABLE_COUPONS (case-
+  // insensitive) — a manually typed code is checked against the same list
+  // customers can browse via the sheet below, not a separate hardcoded value.
   const [couponCode, setCouponCode] = useState("");
   const [couponStatus, setCouponStatus] = useState<"idle" | "applied" | "invalid">("idle");
+  const [couponSheetOpen, setCouponSheetOpen] = useState(false);
 
   const applyCoupon = useCallback(() => {
-    setCouponStatus(couponCode.trim().toUpperCase() === "DISCOUNT" ? "applied" : "invalid");
+    const normalized = couponCode.trim().toUpperCase();
+    setCouponStatus(AVAILABLE_COUPONS.some((c) => c.code === normalized) ? "applied" : "invalid");
   }, [couponCode]);
+
+  const applyCouponFromList = useCallback((code: string) => {
+    setCouponCode(code);
+    setCouponStatus("applied");
+    setCouponSheetOpen(false);
+  }, []);
 
   const removeCoupon = useCallback(() => {
     setCouponStatus("idle");
@@ -559,7 +577,9 @@ export function PlanDetails() {
 
             {/* Discount code — cards.md §8 CommerceCard's coupon-input /
                 coupon-applied variants, composed from real TextInput +
-                Button rather than a custom shell. */}
+                Button rather than a custom shell. Codes can be typed
+                directly or picked from the browse sheet below — both paths
+                validate against the same AVAILABLE_COUPONS list. */}
             {couponStatus === "applied" ? (
               <div className="flex w-full items-center justify-between gap-12 text-left">
                 <div className="flex items-center gap-8">
@@ -568,9 +588,14 @@ export function PlanDetails() {
                     Code "{couponCode.trim().toUpperCase()}" applied
                   </Typography>
                 </div>
-                <Button variant="link" size="sm" onClick={removeCoupon}>
-                  Remove
-                </Button>
+                <div className="flex shrink-0 items-center gap-12">
+                  <Button variant="link" size="sm" onClick={() => setCouponSheetOpen(true)}>
+                    Change
+                  </Button>
+                  <Button variant="link" size="sm" onClick={removeCoupon}>
+                    Remove
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="w-full text-left">
@@ -590,8 +615,61 @@ export function PlanDetails() {
                     </Button>
                   }
                 />
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-8"
+                  onClick={() => setCouponSheetOpen(true)}
+                >
+                  Browse coupons
+                </Button>
               </div>
             )}
+
+            <Drawer
+              open={couponSheetOpen}
+              onClose={() => setCouponSheetOpen(false)}
+              side="bottom"
+              size="md"
+              title="Available coupons"
+            >
+              <div className="flex flex-col gap-12">
+                {AVAILABLE_COUPONS.map((coupon) => {
+                  const isApplied = couponStatus === "applied" && couponCode.trim().toUpperCase() === coupon.code;
+                  return (
+                    <Card key={coupon.code} variant="secondary">
+                      <div className="flex items-center justify-between gap-16 p-16">
+                        <div className="text-left">
+                          <Badge color="purple" textCase="uppercase">
+                            {coupon.code}
+                          </Badge>
+                          <Typography as="p" scale="sm" emphasis="bold" className="mb-4 mt-8 block">
+                            {coupon.title}
+                          </Typography>
+                          <Typography as="p" scale="xs" color="secondary" className="block">
+                            {coupon.body}
+                          </Typography>
+                        </div>
+                        {isApplied ? (
+                          <Badge color="green" textCase="sentence" className="shrink-0">
+                            Applied
+                          </Badge>
+                        ) : (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => applyCouponFromList(coupon.code)}
+                          >
+                            Apply
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </Drawer>
           </div>
         </Card>
       </div>

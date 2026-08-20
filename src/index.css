@@ -89,6 +89,24 @@
   --inputFieldBorderErrorBottom: var(--inputFieldBorderError);
 }
 
+/* ponytail: @acko/drawer@3.0.4's drawer.css reads --shadowFocusRing (close
+   button focus ring) and --shadowModal (panel box-shadow) — neither exists
+   in @acko/tokens. shadows.md documents --shadowXl as the real token for
+   "Modals, dialogs", so that's the --shadowModal fix. There's no single
+   token for a focus-ring box-shadow, but @acko/surface's own CSS (verified
+   in bug #8's investigation) inlines the exact same shape —
+   `0 0 0 2px var(--dropdownFocusRing)` — for a generic focus ring, so the
+   alias here follows that established idiom with the general-purpose
+   --borderFocus color instead of a dropdown-specific one. Needed for the
+   discount-coupon browse sheet (Drawer side="bottom") added to the Premium
+   details card. See DESIGN-SYSTEM-BUGS.md bug #10, which also covers
+   @acko/dialog's much larger set of undefined tokens — not fixed, since
+   this screen ended up not needing Dialog. */
+:root {
+  --shadowModal: var(--shadowXl);
+  --shadowFocusRing: 0 0 0 2px var(--borderFocus);
+}
+
 /* ponytail: these were plain @import — unlayered CSS beats ANY layered CSS
    per the Cascade Layers spec, regardless of specificity or source order.
    Tailwind puts its own utilities in @layer utilities, so every margin/etc
@@ -105,6 +123,7 @@
 @import "@acko/css/calendar.css" layer(components);
 @import "@acko/css/card.css" layer(components);
 @import "@acko/css/checkbox.css" layer(components);
+@import "@acko/css/drawer.css" layer(components);
 @import "@acko/css/dropdown.css" layer(components);
 @import "@acko/css/field.css" layer(components);
 @import "@acko/css/input-group.css" layer(components);

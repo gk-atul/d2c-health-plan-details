@@ -13,7 +13,8 @@ premium pricing. Built against ACKO's real `@acko/*` component library, not a mo
 - **What to know before you buy** — waiting-period and health-evaluation notices
 - **Plan comparison** — entry point into comparing this plan against others
 - **Premium details** — sum insured, discounted premium, price-breakdown link, and a discount
-  code field with its own applied/invalid states
+  code field with its own applied/invalid states, plus a bottom sheet to browse and pick from
+  the available coupons instead of typing one from memory
 - **Full state handling** — loading (skeleton), error, offline (with auto-recovery), and a
   fallback if the hero illustration fails to load
 - **Responsive** — scales across mobile, tablet, and desktop
@@ -27,7 +28,7 @@ npm run dev
 
 ## Also in this repo
 
-- [`DESIGN-SYSTEM-BUGS.md`](./DESIGN-SYSTEM-BUGS.md) — 9 confirmed bugs in the installed
+- [`DESIGN-SYSTEM-BUGS.md`](./DESIGN-SYSTEM-BUGS.md) — 10 confirmed bugs in the installed
   `@acko/*` design system, found while building this screen, written up for the
   design-systems team.
 - [`missing-components-plan-details.md`](./missing-components-plan-details.md) — every
