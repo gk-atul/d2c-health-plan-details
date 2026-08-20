@@ -367,6 +367,59 @@ to verify against.
 
 ---
 
+## 11. `@acko/drawer` opens too fast against the documented motion spec, and its close animation never plays at all
+
+**Severity:** High — this is the acko-motion-system equivalent of bug #2 (a documented spec with
+real, intended values that the shipped component simply doesn't follow), and it affects every
+`Drawer` on this registry version, not just this screen's coupon sheet.
+
+**Cause — open duration:** `drawer.css`'s `.acko-drawer-open .acko-drawer` rule hardcodes
+`transition-duration: 350ms`. `acko-motion-system`'s `curves.md` defines `motion.surface.open`
+("bottom sheet, modal, drawer open") as **500-600ms, default 550ms, ease-out** — the component
+ships roughly 35% faster than the documented floor. `@acko/tokens` even has a real
+`--durationSlower: 500ms` primitive the component could reference and doesn't — it hardcodes a
+literal instead of using the token system at all for timing.
+
+**Cause — close never animates:** this is the more visible half of "why does it pop out so
+fast." `drawer.css` also defines a `.acko-drawer-closing .acko-drawer { transition-duration:
+280ms }` rule — clearly intended as the exit-animation counterpart, roughly matching
+`motion.surface.close`'s 350-450ms range (a bit short, but in the right neighborhood). But
+`Drawer.js`'s React logic never applies that class: `if (!mounted || !open) return null` —
+the moment the consumer's `open` prop flips to `false`, the whole portal (backdrop + panel) is
+removed from the DOM on the same render, with no delay for any transition to play. The
+`.acko-drawer-closing` CSS is dead code, unreachable from the component's own logic.
+
+**Confirmed via:** live-measured with a `MutationObserver` timestamped against
+`performance.now()` at the moment of clicking the close button. The `.acko-drawer-root` node
+was removed from the document in **~10-11ms** — consistent with a synchronous unmount, not a
+280ms (or any) transition. Also confirmed the open duration via `getComputedStyle`:
+`transitionDuration` was exactly `"0.35s"` before the fix below.
+
+**Fix — open duration:** overridden directly in `src/index.css` (unlayered CSS beats the
+`layer(components)` import, same mechanism as the Cascade Layers fix at the top of that file):
+
+```css
+.acko-drawer-open .acko-drawer {
+  transition-duration: var(--durationSlower);
+}
+```
+
+**Fix — close animation:** not applied. This isn't a CSS/token problem — it's the component's
+own React logic unmounting synchronously — so no `:root` alias or stylesheet override can touch
+it. Properly fixing it upstream means `Drawer.js` deferring the actual unmount until its own
+`.acko-drawer-closing` transition finishes (the CSS for this already exists and is the right
+shape, it's just never triggered). A local workaround is possible — wrap `Drawer`, keep it
+mounted an extra ~400ms on close, and drive the panel's exit transform imperatively via its
+forwarded ref — but that means reaching past the component's own state machine from the outside,
+which this project has consistently avoided doing (see bugs #8 and #10, where a broken component
+was documented rather than patched). Flagging for the design-systems team rather than shipping
+that workaround unasked.
+
+**Verified here:** open duration now measures `0.5s` via `getComputedStyle` — confirmed live
+after the fix. Close timing is unchanged (~10ms) and still open.
+
+---
+
 ## Also worth reconciling (not a bug, a docs/registry mismatch)
 
 `cards.md`'s catalog and the missing-components protocol both list `Tabs`, `Table`,

@@ -28,7 +28,7 @@ npm run dev
 
 ## Also in this repo
 
-- [`DESIGN-SYSTEM-BUGS.md`](./DESIGN-SYSTEM-BUGS.md) — 10 confirmed bugs in the installed
+- [`DESIGN-SYSTEM-BUGS.md`](./DESIGN-SYSTEM-BUGS.md) — 11 confirmed bugs in the installed
   `@acko/*` design system, found while building this screen, written up for the
   design-systems team.
 - [`missing-components-plan-details.md`](./missing-components-plan-details.md) — every

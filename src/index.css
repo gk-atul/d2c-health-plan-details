@@ -107,6 +107,21 @@
   --shadowFocusRing: 0 0 0 2px var(--borderFocus);
 }
 
+/* ponytail: @acko/drawer's open transition is a hardcoded 350ms literal
+   (`.acko-drawer-open .acko-drawer { transition-duration: 350ms }`) — not a
+   token reference, so there's nothing to alias via :root. acko-motion-system's
+   curves.md defines `motion.surface.open` (bottom sheet/modal/drawer open)
+   as 500-600ms, default 550ms, and @acko/tokens even has a real
+   --durationSlower: 500ms token the component could have used and didn't.
+   Overriding the literal directly — same unlayered-beats-layered mechanism
+   as the block below, just overriding a duration instead of aliasing an
+   undefined token. This is a partial fix: the *close* transition never
+   actually plays at all (component unmounts synchronously on open=false,
+   see DESIGN-SYSTEM-BUGS.md bug #11) — duration alone can't fix that. */
+.acko-drawer-open .acko-drawer {
+  transition-duration: var(--durationSlower);
+}
+
 /* ponytail: these were plain @import — unlayered CSS beats ANY layered CSS
    per the Cascade Layers spec, regardless of specificity or source order.
    Tailwind puts its own utilities in @layer utilities, so every margin/etc
