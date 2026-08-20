@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+@import "@acko/tokens/tokens.css";
+@import "@acko/tokens/theme.css";
+
+/* ponytail: @acko/card@3.0.4 reads var(--radius5xl), which doesn't exist —
+   confirmed against the design system's own docs (radii.md): cards are
+   documented to use --radius4xl (20px), there is no 5xl in the spec. This
+   is a bug in @acko/card's CSS (wrong token reference), not a gap in
+   @acko/tokens. Aliasing to the documented value, not a guessed one, as a
+   stopgap until the component package is fixed upstream. */
+:root {
+  --radius5xl: var(--radius4xl);
+}
+
+/* ponytail: @acko/toggle@3.0.4's toggle.css is written entirely against
+   pre-2.0.3 legacy --color* tokens (--colorToggleActiveBg, --colorBorder,
+   etc.) — semantics.md confirms these were removed; verified all 11 the
+   component depends on are undefined in the installed @acko/tokens. That's
+   why the selected segment had no fill: background fell back to transparent,
+   and the border/text only *looked* intentional because both independently
+   fell back to currentColor/inherited black. Supplying the missing tokens
+   here — not overriding .acko-toggle-* classes directly — so the
+   component's own CSS resolves correctly instead of fighting it. Mapping is
+   inferred from semantics.md's documented roles + what every reference
+   screenshot shows (solid black pill, white text) — see DESIGN-SYSTEM-BUGS.md
+   bug #4 for the full trail. Stopgap until toggle.css is fixed upstream. */
+:root {
+  --colorToggleBg: var(--surfaceRaised);
+  --colorToggleText: var(--textPrimary);
+  --colorToggleActiveBg: var(--surfaceStaticBlack);
+  --colorToggleActiveText: var(--textStaticLight);
+  --colorSurfaceRaised: var(--surfaceRaised);
+  --colorBorder: var(--borderDefault);
+  --colorPrimaryHover: var(--brandHover);
+  --colorToggleBgHover: var(--surfaceFillHover);
+  --colorSuccessSubtle: var(--statusSuccessSubtle);
+  --colorSuccess: var(--statusSuccessBase);
+  --colorSuccessText: var(--statusSuccessText);
+  --colorErrorSubtle: var(--statusErrorSubtle);
+  --colorError: var(--statusErrorBase);
+  --colorErrorText: var(--statusErrorText);
+  --colorBtnDisabledBg: var(--surfaceFillDisable);
+  --colorBtnDisabledText: var(--textDisabled);
+}
+
+/* ponytail: @acko/button@3.0.4's secondary/ghost/*OnDark variants reference
+   --buttonFill{Variant}Text tokens that were never defined in @acko/tokens —
+   confirmed 0 matches for all 4. Only the variants that instead reuse
+   pre-existing semantic tokens (primary -> --textStaticLight, link ->
+   --textLink, danger -> --statusErrorText) work correctly. That's why "View
+   all covers" (variant="secondary") rendered black instead of brand-colored
+   text: --acko-button-fg became invalid, so color fell back to inherited
+   black. Fixing only `secondary` here since it's the only variant this
+   screen actually uses — ghost/*OnDark have the identical bug, logged but
+   not fixed, since there's nothing on this page to verify them against.
+   See DESIGN-SYSTEM-BUGS.md bug #5. */
+:root {
+  --buttonFillSecondaryText: var(--textBrand);
+  /* Same bug, ghost variant — needed once the back button switched from a
+     plain native <button> to the real Button component. */
+  --buttonFillGhostText: var(--textPrimary);
+}
+
+/* ponytail: @acko/skeleton@3.0.4's skeleton.css reads --colorDisabledBg and
+   --colorSurface — same legacy pre-2.0.3 naming as bugs #4/#5, both
+   confirmed undefined. That's why the skeleton placeholders were rendering
+   fully invisible (white-on-white) instead of showing any gray fill —
+   caught while verifying the loading state screenshot. Real equivalents
+   per semantics.md's disabled/ section and its legacy migration table.
+   See DESIGN-SYSTEM-BUGS.md bug #6. */
+:root {
+  --colorDisabledBg: var(--disabledBg);
+  --colorSurface: var(--surfaceBase);
+}
+
+/* ponytail: these were plain @import — unlayered CSS beats ANY layered CSS
+   per the Cascade Layers spec, regardless of specificity or source order.
+   Tailwind puts its own utilities in @layer utilities, so every margin/etc
+   utility on a component (e.g. Typography's `.acko-typography { margin:
+   var(--spacing0) }`) was silently winning over things like `mt-32`,
+   project-wide. Importing into `components` — the standard place third-party
+   component CSS goes — restores the intended utilities-win-last order. */
+@import "@acko/css/accordion.css" layer(components);
+@import "@acko/css/alert.css" layer(components);
+@import "@acko/css/avatar.css" layer(components);
+@import "@acko/css/badge.css" layer(components);
+@import "@acko/css/breadcrumb.css" layer(components);
+@import "@acko/css/button.css" layer(components);
+@import "@acko/css/calendar.css" layer(components);
+@import "@acko/css/card.css" layer(components);
+@import "@acko/css/checkbox.css" layer(components);
+@import "@acko/css/dropdown.css" layer(components);
+@import "@acko/css/field.css" layer(components);
+@import "@acko/css/input-group.css" layer(components);
+@import "@acko/css/label.css" layer(components);
+@import "@acko/css/navigation-wizard.css" layer(components);
+@import "@acko/css/pagination.css" layer(components);
+@import "@acko/css/progress.css" layer(components);
+@import "@acko/css/radio.css" layer(components);
+@import "@acko/css/scroll-area.css" layer(components);
+@import "@acko/css/separator.css" layer(components);
+@import "@acko/css/skeleton.css" layer(components);
+@import "@acko/css/switch.css" layer(components);
+@import "@acko/css/table.css" layer(components);
+@import "@acko/css/tabs.css" layer(components);
+@import "@acko/css/text-input.css" layer(components);
+@import "@acko/css/textarea.css" layer(components);
+@import "@acko/css/toggle.css" layer(components);
+@import "@acko/css/tooltip.css" layer(components);
+@import "@acko/css/typography.css" layer(components);
+
+body {
+  font-family: "Euclid Circular B", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
