@@ -292,10 +292,10 @@ function StatusScreen({
   return (
     <div className="mx-auto flex w-full max-w-[430px] sm:max-w-[600px] lg:max-w-[680px] flex-col items-center px-16 sm:px-32 lg:px-40 py-64 text-center">
       <Icon32 icon={Icon} />
-      <Typography as="p" scale="lg" emphasis="bold" className="mb-8 mt-16 block">
+      <Typography as="p" scale="lg" emphasis="bold" align="center" className="mb-8 mt-16 block">
         {title}
       </Typography>
-      <Typography as="p" scale="sm" color="secondary" className="mb-24 block">
+      <Typography as="p" scale="sm" color="secondary" align="center" className="mb-24 block">
         {body}
       </Typography>
       <Button variant="secondary" onClick={onRetry}>
@@ -403,10 +403,10 @@ export function PlanDetails() {
                 onError={() => setHeroImageFailed(true)}
               />
             )}
-            <Typography as="h1" scale="2xl" emphasis="bold" color="brand">
+            <Typography as="h1" scale="2xl" emphasis="bold" color="brand" align="center">
               Platinum Lite Health Plan
             </Typography>
-            <Typography as="p" scale="sm" color="secondary" className="mt-4">
+            <Typography as="p" scale="sm" color="secondary" align="center" className="mt-4">
               Get ₹50 lakh for you, your spouse, and children
             </Typography>
           </div>
@@ -497,10 +497,10 @@ export function PlanDetails() {
             </Badge>
             {/* No forced uppercase — typography.md: all-caps outside Badge is
                 a named anti-pattern. Plain small secondary label instead. */}
-            <Typography as="p" scale="xs" color="secondary" className="mt-16 block">
+            <Typography as="p" scale="xs" color="secondary" align="center" className="mt-16 block">
               Sum insured
             </Typography>
-            <Typography as="p" scale="2xl" emphasis="bold" className="mt-4 block">
+            <Typography as="p" scale="2xl" emphasis="bold" align="center" className="mt-4 block">
               ₹50 lakh
             </Typography>
 

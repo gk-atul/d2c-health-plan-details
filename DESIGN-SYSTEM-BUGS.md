@@ -221,6 +221,39 @@ render with visible gray fill, confirmed via screenshot, no console errors.
 
 ---
 
+## 7. `Typography` defaults to `align-left` regardless of an ancestor's `text-align`
+
+**Severity:** Medium — silently breaks any centered text block that wraps to more than one
+line; invisible on short, single-line copy, which is why it shipped unnoticed.
+
+**Cause:** every `Typography` instance renders an explicit `acko-typography-align-*` class
+(`acko-typography-align-left` unless an `align` prop is passed). `typography.css` compiles
+this to a literal `text-align: left` declaration on the element itself. An explicit
+declaration on an element always wins over an inherited value, so wrapping a `Typography` in
+a parent with Tailwind's `text-center` (or any inherited `text-align: center`) has no effect —
+the component never actually inherits alignment from its container.
+
+**Confirmed via:** the offline/error `StatusScreen`'s body copy wraps to two lines inside a
+`flex flex-col items-center text-center` wrapper. `getComputedStyle(el).textAlign` returned
+`"left"` on both the heading and body `Typography` despite the ancestor's `text-center`; each
+wrapped line rendered left-justified instead of centered as a block. The hero subtitle
+("Get ₹50 lakh...") has the identical setup and reproduces the same way once it wraps at
+mobile widths (verified at 375px).
+
+**Fix:** `Typography` does expose a working `align?: "left" | "center" | "right"` prop
+(`typography.css` has real, correctly-wired rules for all three — unlike bug #2, this one
+isn't a dead API), it just isn't the default and doesn't fall back to inheritance. Any
+`Typography` meant to sit centered must pass `align="center"` explicitly; a `text-center`
+wrapper class alone does nothing.
+
+**Fixed and verified here:** added `align="center"` to both `Typography` elements in
+`StatusScreen` (used by the error and offline states), the hero title/subtitle, and the two
+centered labels in the Premium details card. Verified via `getComputedStyle` (`textAlign:
+"center"` on all five) and screenshots of the error and offline states, and the hero at
+375px where the subtitle wraps.
+
+---
+
 ## Also worth reconciling (not a bug, a docs/registry mismatch)
 
 `cards.md`'s catalog and the missing-components protocol both list `Tabs`, `Table`,
