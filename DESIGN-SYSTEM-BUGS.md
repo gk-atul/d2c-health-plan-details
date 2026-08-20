@@ -437,6 +437,42 @@ window, both still easing at the ~370ms mark, consistent with the 400ms exit.
 
 ---
 
+## 12. `cards.md`/`forms-controls.md` document two `Button` variants that don't exist
+
+**Severity:** Medium — not a rendering bug (TypeScript catches it before it ships), but a doc
+error that would waste anyone's time who follows it literally, and a real bug in this screen
+was traced back to it.
+
+**Cause:** `cards.md`'s slot vocabulary lists a card's `secondary-cta` as
+`Button variant="ghost"` **or `"outline"`**, and `forms-controls.md`'s "Destructive Actions"
+section shows `<Button variant="destructive">Cancel claim</Button>`. The real, installed
+`@acko/button`'s `ButtonVariant` union type is:
+
+```ts
+export type ButtonVariant = "primary" | "secondary" | "inverted" | "inverted-secondary" | "ghost" | "link" | "danger";
+```
+
+Neither `"outline"` nor `"destructive"` exists. `"ghost"` is real (the other half of that
+`secondary-cta` line); `"danger"` is the real equivalent of the documented-but-fake
+`"destructive"`.
+
+**Confirmed via:** reading the shipped `.d.ts` directly — a stricter form of confirmation than
+most bugs in this file, since this one is a TypeScript union type: passing either fake value
+would be a compile error, not a silent runtime fallback.
+
+**Found while investigating:** the coupon-applied row's "Change" and "Remove" actions were both
+`Button variant="link"` — visually identical, which is exactly what happens when the
+`secondary-cta` slot rule (`variant="ghost"`, distinct from a plain link) isn't followed.
+Fixed here: "Remove" (the documented `secondary-cta` for `CommerceCard`'s applied state) now
+uses `variant="ghost"`; "Change" (not part of the documented pattern — added for this screen's
+own re-pick flow) keeps `variant="link"`, matching the "Browse coupons" link it mirrors. Also
+restacked the row per `layout.md`'s "Side-by-side CTAs: stacked full width (mobile) / inline
+(tablet+)" rule — the label and the two actions were competing for space on one line at mobile
+widths, which is what made the pairing feel cramped on top of looking identical. Verified at
+400px (stacked: label row, then a right-aligned actions row) and 1400px (single inline row).
+
+---
+
 ## Also worth reconciling (not a bug, a docs/registry mismatch)
 
 `cards.md`'s catalog and the missing-components protocol both list `Tabs`, `Table`,

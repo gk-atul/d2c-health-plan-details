@@ -684,18 +684,27 @@ export function PlanDetails() {
                 directly or picked from the browse sheet below — both paths
                 validate against the same AVAILABLE_COUPONS list. */}
             {couponStatus === "applied" ? (
-              <div className="flex w-full items-center justify-between gap-12 text-left">
+              // cards.md's slot vocabulary: secondary-cta -> Button
+              // variant="ghost" (not "link" — that's why Change and Remove
+              // read as identical). "Change" reuses the link treatment
+              // from "Browse coupons" above since it's the same action;
+              // "Remove" gets the ghost pill so it reads as the distinct,
+              // lesser action. Row stacks on mobile, goes inline at sm+ —
+              // layout.md's "Side-by-side CTAs: stacked full width (mobile)
+              // / inline (tablet+)" — so a wrapped label never fights a
+              // cramped button row.
+              <div className="flex w-full flex-col gap-8 text-left sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-8">
                   <Icon16 icon={Discount} />
                   <Typography as="p" scale="sm" emphasis="medium">
                     Code "{couponCode.trim().toUpperCase()}" applied
                   </Typography>
                 </div>
-                <div className="flex shrink-0 items-center gap-12">
+                <div className="flex shrink-0 items-center justify-end gap-12">
                   <Button variant="link" size="sm" onClick={() => setCouponSheetOpen(true)}>
                     Change
                   </Button>
-                  <Button variant="link" size="sm" onClick={removeCoupon}>
+                  <Button variant="ghost" size="sm" onClick={removeCoupon}>
                     Remove
                   </Button>
                 </div>
