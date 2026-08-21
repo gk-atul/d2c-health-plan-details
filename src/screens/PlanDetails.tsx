@@ -314,35 +314,35 @@ function DevStatusPanel({ onSet }: { onSet: (status: PageStatus) => void }) {
     );
   }
 
+  // Stacks upward, not sideways — the collapsed pill's ChevronUp/ChevronDown
+  // only make sense if that's the direction it actually opens/closes in.
   return (
-    <div
-      className="fixed bottom-16 right-16 z-50 flex items-center gap-8 rounded-2xl border border-dashed p-8"
-      style={{ background: "var(--surfaceStaticWhite)", borderColor: "var(--borderDefault)" }}
-    >
-      <button
-        type="button"
-        onClick={() => setExpanded(false)}
-        aria-label="Collapse dev status panel"
-        className="flex items-center gap-4"
-      >
-        <Typography as="span" scale="xs" color="secondary">
-          DEV
-        </Typography>
-        <Icon20 icon={ChevronDown} />
-      </button>
+    <div className="fixed bottom-16 right-16 z-50 flex flex-col items-stretch gap-8">
       {(["loading", "error", "offline", "success"] as const).map((s) => (
         <button
           key={s}
           type="button"
           onClick={() => onSet(s)}
           className="rounded-lg px-8 py-4"
-          style={{ background: "var(--surfaceFillSubtle)" }}
+          style={{ background: "var(--surfaceStaticWhite)", border: "1px dashed var(--borderDefault)" }}
         >
           <Typography as="span" scale="xs">
             {s}
           </Typography>
         </button>
       ))}
+      <button
+        type="button"
+        onClick={() => setExpanded(false)}
+        aria-label="Collapse dev status panel"
+        className="flex items-center justify-center gap-4 rounded-2xl border border-dashed p-8"
+        style={{ background: "var(--surfaceStaticWhite)", borderColor: "var(--borderDefault)" }}
+      >
+        <Typography as="span" scale="xs" color="secondary">
+          DEV
+        </Typography>
+        <Icon20 icon={ChevronDown} />
+      </button>
     </div>
   );
 }
