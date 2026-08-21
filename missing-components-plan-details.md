@@ -55,6 +55,12 @@
   for exactly this need, not a custom flag that could accidentally leak.
 - **Verified live:** clicked through all 4 states in sequence (loading → error → loading held
   → success), no console errors, panel persists correctly across every screen.
+- **Update — collapsible:** the panel used to sit permanently expanded (all 4 buttons visible),
+  which was too intrusive for a demo. Now defaults collapsed to a small `DEV` + `ChevronUp` pill;
+  click expands it (chevron flips to `ChevronDown`) and click again collapses. Plain composition
+  (real `Typography`, `Icon20` wrapper around the real `ChevronUp`/`ChevronDown` icons, no custom
+  component) — not logged as its own entry per the "what not to log" rule, folded into this one.
+  Verified both directions live.
 
 ## Responsive scaling: page was mobile-only, fixed at 430px on every viewport — RESOLVED
 - **Found via:** direct question, verified empirically before assuming — at a 1440px window,

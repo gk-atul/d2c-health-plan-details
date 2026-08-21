@@ -15,6 +15,8 @@ import {
   SumInsuredRestored,
   DoctorOnCall,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Stopwatch,
   HealthEvaluation,
   Coverage,
@@ -292,15 +294,42 @@ function usePlanDetailsStatus() {
 // indefinitely once forced (the real 900ms timer underneath is irrelevant
 // while an override is active) so it's actually showable, not a 900ms flash.
 function DevStatusPanel({ onSet }: { onSet: (status: PageStatus) => void }) {
+  const [expanded, setExpanded] = useState(false);
   if (!import.meta.env.DEV) return null;
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        aria-label="Open dev status panel"
+        className="fixed bottom-16 right-16 z-50 flex items-center gap-4 rounded-2xl border border-dashed p-8"
+        style={{ background: "var(--surfaceStaticWhite)", borderColor: "var(--borderDefault)" }}
+      >
+        <Typography as="span" scale="xs" color="secondary">
+          DEV
+        </Typography>
+        <Icon20 icon={ChevronUp} />
+      </button>
+    );
+  }
+
   return (
     <div
-      className="fixed bottom-16 right-16 z-50 flex gap-8 rounded-2xl border border-dashed p-8"
+      className="fixed bottom-16 right-16 z-50 flex items-center gap-8 rounded-2xl border border-dashed p-8"
       style={{ background: "var(--surfaceStaticWhite)", borderColor: "var(--borderDefault)" }}
     >
-      <Typography as="span" scale="xs" color="secondary" className="self-center pl-4">
-        DEV
-      </Typography>
+      <button
+        type="button"
+        onClick={() => setExpanded(false)}
+        aria-label="Collapse dev status panel"
+        className="flex items-center gap-4"
+      >
+        <Typography as="span" scale="xs" color="secondary">
+          DEV
+        </Typography>
+        <Icon20 icon={ChevronDown} />
+      </button>
       {(["loading", "error", "offline", "success"] as const).map((s) => (
         <button
           key={s}
@@ -587,7 +616,7 @@ export function PlanDetails() {
           Icon={Stopwatch}
           title="About waiting periods"
           description="Your plan has a waiting time before it starts covering certain treatments"
-          linkText="See how it unlocks"
+          linkText="See how it works"
         />
         <InfoCard
           className="mb-24"
