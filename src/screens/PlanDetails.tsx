@@ -17,7 +17,7 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronDown,
-  Phone,
+  Headphone,
   Stopwatch,
   HealthEvaluation,
   Coverage,
@@ -355,23 +355,38 @@ function DevStatusPanel({ onSet }: { onSet: (status: PageStatus) => void }) {
 // interactive element even so — met via that doc's own documented
 // technique (a pseudo-element extending the hit area without affecting
 // visible size), applied only on the vertical axis: width is already well
-// past 44px (it has an icon + "Talk to an expert"), only the 32px height
-// falls short, so only top/bottom get the (44px - 100%) / -2 extension —
-// applying it on all four sides too (the doc's literal square-icon-button
-// example) would balloon the invisible hit area sideways for no reason.
+// past 44px (icon + "Learn more"), only the 32px height falls short, so
+// only top/bottom get the (44px - 100%) / -2 extension — applying it on
+// all four sides too (the doc's literal square-icon-button example) would
+// balloon the invisible hit area sideways for no reason.
 // Inset from the viewport edge (not flush against it) so it reads as a
 // floating action, not a tab poking off-page. z-[--zSticky] is the real
 // token for exactly this ("sticky headers, floating elements").
-function TalkToExpertButton() {
+//
+// Hover looked translucent because it genuinely is, by design:
+// .acko-button-secondary:hover sets background: var(--fillSubtleHover),
+// which resolves to an alpha color (--alphaPrimaryA100), not a solid one —
+// semantics.md documents it as "Subtle brand fill hover", meant to tint
+// whatever's already behind it. That's correct for every other secondary
+// button on this page (they sit inside an opaque white Card, so the tint
+// just washes over white). This one floats over scrolling page content
+// with nothing solid behind it, so the same alpha hover shows through to
+// whatever's currently underneath instead. Fix: give the wrapper its own
+// opaque backdrop, same shape and footprint as the button — the hover
+// tint then always composites against that, never against the page.
+function StickyLearnMoreButton() {
   return (
-    <div className="fixed right-16 top-1/2 z-[var(--zSticky)] -translate-y-1/2">
+    <div
+      className="fixed right-16 top-1/2 z-[var(--zSticky)] -translate-y-1/2 rounded-full"
+      style={{ background: "var(--surfaceFillDefault)" }}
+    >
       <Button
         variant="secondary"
         size="xs"
-        iconLeft={<Phone aria-hidden="true" />}
+        iconLeft={<Headphone aria-hidden="true" />}
         className="relative before:absolute before:inset-x-0 before:content-[''] before:[top:calc((44px-100%)/-2)] before:[bottom:calc((44px-100%)/-2)]"
       >
-        Talk to an expert
+        Learn more
       </Button>
     </div>
   );
@@ -859,7 +874,7 @@ export function PlanDetails() {
           </div>
         </Card>
       </div>
-      <TalkToExpertButton />
+      <StickyLearnMoreButton />
       <DevStatusPanel onSet={forceStatus} />
     </div>
   );
