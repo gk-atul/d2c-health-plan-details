@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronDown,
+  Phone,
   Stopwatch,
   HealthEvaluation,
   Coverage,
@@ -343,6 +344,35 @@ function DevStatusPanel({ onSet }: { onSet: (status: PageStatus) => void }) {
         </Typography>
         <Icon20 icon={ChevronDown} />
       </button>
+    </div>
+  );
+}
+
+// Sticky support CTA — real Button (variant="secondary", the same weight as
+// "View all covers" elsewhere on this page), smallest real size (xs, 32px
+// tall) per the ask to keep it as small as the design system allows.
+// touch-accessibility.md still requires a 44px tap target on every
+// interactive element even so — met via that doc's own documented
+// technique (a pseudo-element extending the hit area without affecting
+// visible size), applied only on the vertical axis: width is already well
+// past 44px (it has an icon + "Talk to an expert"), only the 32px height
+// falls short, so only top/bottom get the (44px - 100%) / -2 extension —
+// applying it on all four sides too (the doc's literal square-icon-button
+// example) would balloon the invisible hit area sideways for no reason.
+// Inset from the viewport edge (not flush against it) so it reads as a
+// floating action, not a tab poking off-page. z-[--zSticky] is the real
+// token for exactly this ("sticky headers, floating elements").
+function TalkToExpertButton() {
+  return (
+    <div className="fixed right-16 top-1/2 z-[var(--zSticky)] -translate-y-1/2">
+      <Button
+        variant="secondary"
+        size="xs"
+        iconLeft={<Phone aria-hidden="true" />}
+        className="relative before:absolute before:inset-x-0 before:content-[''] before:[top:calc((44px-100%)/-2)] before:[bottom:calc((44px-100%)/-2)]"
+      >
+        Talk to an expert
+      </Button>
     </div>
   );
 }
@@ -829,6 +859,7 @@ export function PlanDetails() {
           </div>
         </Card>
       </div>
+      <TalkToExpertButton />
       <DevStatusPanel onSet={forceStatus} />
     </div>
   );

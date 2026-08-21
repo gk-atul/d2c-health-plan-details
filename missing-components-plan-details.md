@@ -1,3 +1,24 @@
+## TalkToExpertButton — sticky support CTA
+- **Type:** not logged as MISSING/VARIANT-GAP — plain composition of the real `Button`
+  (`variant="secondary"`, `size="xs"`, `iconLeft={<Phone />}`), no custom component built.
+  Noting the composition decisions since they're not obvious from the code alone.
+- **Screen:** plan-details, fixed to the right edge, vertically centered on the viewport.
+- **Sizing:** `size="xs"` (32px tall) is the smallest real `Button` size — matches the explicit
+  "as small as the design system allows" ask. That's under `touch-accessibility.md`'s 44px tap
+  target minimum, met via that doc's own documented pseudo-element technique — but applied only
+  on the vertical axis (`top`/`bottom`, ~7px each way), not all four sides as the doc's literal
+  square-icon-button example shows. The button's width is already well past 44px (icon + "Talk
+  to an expert"), so extending horizontally too would only balloon the invisible hit area for no
+  reason.
+- **Placement:** inset `right-16` from the viewport edge, not flush against it — asked
+  explicitly not to look like something protruding off the page, so it reads as a floating
+  action rather than a tab. `z-[var(--zSticky)]` is the real token for "sticky headers, floating
+  elements."
+- **Icon:** `Phone`, not `Phone1` — `iconography.md`'s own example import uses `Phone` for
+  call-related actions, took that as the canonical choice between the two.
+- **Verified live:** 146×32px visible pill, 46px effective tap height, vertically centered to
+  the pixel at two viewport heights tested, no collision with the (bottom-anchored) dev panel.
+
 ## Bug: premium price never actually reacted to the coupon state (my error)
 - **What happened:** the discount-code feature was built purely as a UI affordance — apply/
   applied/invalid states all worked, but the Premium card's price row (`₹8,000` struck through,
