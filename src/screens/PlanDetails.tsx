@@ -725,14 +725,14 @@ export function PlanDetails() {
                 <div className="flex items-baseline gap-8">
                   {/* Real figure from the team — resolves the earlier-flagged
                       pricing anomaly (₹1,600 struck through under ₹5,090/month
-                      read as a hike, not a discount). ₹8,000 → ₹5,090 is a
+                      read as a hike, not a discount). ₹9,000 → ₹5,090 is a
                       genuine markdown — but only once a coupon is actually
-                      applied. Without one, ₹8,000 is just the premium, not
+                      applied. Without one, ₹9,000 is just the premium, not
                       a reference price to strike through. */}
                   {couponStatus === "applied" ? (
                     <>
                       <Typography as="span" scale="sm" color="secondary" className="line-through">
-                        ₹8,000
+                        ₹9,000
                       </Typography>
                       <Typography as="span" scale="lg" emphasis="bold">
                         ₹5,090/month
@@ -740,7 +740,7 @@ export function PlanDetails() {
                     </>
                   ) : (
                     <Typography as="span" scale="lg" emphasis="bold">
-                      ₹8,000
+                      ₹9,000
                     </Typography>
                   )}
                 </div>
