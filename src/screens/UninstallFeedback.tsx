@@ -5,16 +5,10 @@ import { Card } from "@acko/card";
 import { Textarea } from "@acko/textarea";
 import { Alert } from "@acko/alert";
 import { Close, Mail, Gift, Stopwatch, TriangleWarning, Star, Tick } from "@acko/icons";
+import FeedbackIntroIllustration from "../assets/illustrations/feedback-intro.svg";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
-function Icon24({ icon: Cmp }: { icon: IconType }) {
-  return (
-    <span className="inline-flex size-24 shrink-0 [&_svg]:size-full" aria-hidden="true">
-      <Cmp aria-hidden="true" />
-    </span>
-  );
-}
 function Icon20({ icon: Cmp }: { icon: IconType }) {
   return (
     <span className="inline-flex size-20 shrink-0 [&_svg]:size-full" aria-hidden="true">
@@ -134,12 +128,17 @@ export function UninstallFeedback({ onDone }: { onDone: () => void }) {
 
         {step === "intro" ? (
           <>
-            <div className="mb-16 flex items-center justify-center gap-8">
-              <Icon24 icon={Mail} />
-              <Typography as="h1" scale="2xl" emphasis="bold" align="center">
-                We'd love to hear from you
-              </Typography>
+            {/* Real illustration asset (not an @acko/icons icon — that set
+                is deliberately flat/single-color line-art at 16-32px, a
+                different tier from a standalone hero graphic; same reason
+                PlanDetails' own hero uses coverage-shield.svg instead of
+                an icon). Provided by design for this screen specifically. */}
+            <div className="mb-16 flex justify-center">
+              <img src={FeedbackIntroIllustration} alt="" aria-hidden="true" width={80} height={80} />
             </div>
+            <Typography as="h1" scale="2xl" emphasis="bold" align="center" className="mb-16 block">
+              We'd love to hear from you
+            </Typography>
 
             <Card variant="primary">
               <div className="p-24">
