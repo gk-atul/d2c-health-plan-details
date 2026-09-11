@@ -4,15 +4,55 @@ import { Button } from "@acko/button";
 import { Card } from "@acko/card";
 import { Textarea } from "@acko/textarea";
 import { Alert } from "@acko/alert";
-import { Close, Mail, Gift, Stopwatch, TriangleWarning } from "@acko/icons";
+import { Close, Mail, Gift, Stopwatch, TriangleWarning, Star } from "@acko/icons";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
+function Icon20({ icon: Cmp }: { icon: IconType }) {
+  return (
+    <span className="inline-flex size-20 shrink-0 [&_svg]:size-full" aria-hidden="true">
+      <Cmp aria-hidden="true" />
+    </span>
+  );
+}
 function Icon32({ icon: Cmp }: { icon: IconType }) {
   return (
     <span className="inline-flex size-32 shrink-0 [&_svg]:size-full" aria-hidden="true">
       <Cmp aria-hidden="true" />
     </span>
+  );
+}
+function Icon40({ icon: Cmp }: { icon: IconType }) {
+  return (
+    <span className="inline-flex size-40 shrink-0 [&_svg]:size-full" aria-hidden="true">
+      <Cmp aria-hidden="true" />
+    </span>
+  );
+}
+
+// Same direction as the reference (envelope + small sparkle accent, warm
+// and personal), built from real @acko/icons rather than a copied asset:
+// the icon-in-circle hero treatment already used for PlanDetails' hero
+// fallback (Icon40 in a 96px --accentPurpleSurface circle), plus a small
+// floating badge — Star, closest real icon to a "sparkle" accent — at the
+// corner, matching that hero's own accent-badge composition idiom rather
+// than inventing a new one.
+function FeedbackHeroIllustration() {
+  return (
+    <div className="mb-24 flex justify-center">
+      <div
+        className="relative flex h-96 w-96 items-center justify-center rounded-full"
+        style={{ background: "var(--accentPurpleSurface)" }}
+      >
+        <Icon40 icon={Mail} />
+        <span
+          className="absolute -right-4 -top-4 flex size-32 items-center justify-center rounded-full"
+          style={{ background: "var(--surfaceStaticWhite)", boxShadow: "var(--shadowXs)" }}
+        >
+          <Icon20 icon={Star} />
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -83,10 +123,11 @@ export function UninstallFeedback({ onDone }: { onDone: () => void }) {
 
         {step === "capture" ? (
           <>
-            <Typography as="h1" scale="2xl" emphasis="bold" className="block">
+            <FeedbackHeroIllustration />
+            <Typography as="h1" scale="2xl" emphasis="bold" align="center" className="block">
               Before you go
             </Typography>
-            <Typography as="p" scale="sm" color="secondary" className="mb-24 mt-8 block">
+            <Typography as="p" scale="sm" color="secondary" align="center" className="mb-24 mt-8 block">
               We read every message personally — telling us what happened genuinely helps us fix
               it for the next person.
             </Typography>
