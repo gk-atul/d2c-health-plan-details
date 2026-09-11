@@ -110,7 +110,19 @@ const NUDGE_CONTENT: Record<
 // instead of inventing a named executive's signature.
 type Step = "intro" | "capture" | "completion";
 
-export function UninstallFeedback({ onDone }: { onDone: () => void }) {
+// ponytail: userName is a prop, not baked-in copy — this screen has no
+// real auth/session to read the logged-in user's name from yet (no
+// backend, same as everything else on this project). "Priya" as the
+// default is a stand-in for that, reusing the persona name already used
+// elsewhere for this project's target user. Wire it to the real session
+// once one exists; the greeting itself doesn't change.
+export function UninstallFeedback({
+  onDone,
+  userName = "Priya",
+}: {
+  onDone: () => void;
+  userName?: string;
+}) {
   const [step, setStep] = useState<Step>("intro");
   const [feedback, setFeedback] = useState("");
   const nudge = useMemo(() => NUDGE_CONTENT[classifyFeedback(feedback)], [feedback]);
@@ -137,21 +149,27 @@ export function UninstallFeedback({ onDone }: { onDone: () => void }) {
               <img src={FeedbackIntroIllustration} alt="" aria-hidden="true" width={80} height={80} />
             </div>
             <Typography as="h1" scale="2xl" emphasis="bold" align="center" className="mb-16 block">
-              We'd love to hear from you
+              Hey {userName}, what could we have done better?
             </Typography>
 
             <Card variant="primary">
               <div className="p-24">
                 <Typography as="p" scale="sm" className="mb-16 block">
-                  Before you go, tell us what happened.
+                  It's hard watching you leave, but we'd like the opportunity to do better.
                 </Typography>
                 <Typography as="p" scale="sm" color="secondary" className="mb-16 block">
-                  Our team personally reads every message that comes through here — it helps us
-                  fix real problems for the next person, not just log a statistic.
+                  Our team personally reads every review and feedback. If something didn't work,
+                  felt unfair, or you felt like it didn't add value to your life, we'd like to
+                  know about it. This will help us improve ACKO for you and millions of other
+                  Indians.
                 </Typography>
-                <Typography as="p" scale="sm" color="secondary" className="block">
-                  If something didn't work, felt unfair, or you simply don't need this anymore,
-                  we'd rather know than guess.
+                <Typography as="p" scale="sm" color="secondary" className="mb-16 block">
+                  Please take 1 minute to let us know your honest thoughts.
+                </Typography>
+                <Typography as="p" scale="sm" className="block">
+                  Thank you,
+                  <br />
+                  Team ACKO
                 </Typography>
               </div>
             </Card>
