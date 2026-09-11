@@ -156,12 +156,8 @@ export function UninstallFeedback({
         ) : step === "capture" ? (
           <>
             <FeedbackHeroIllustration />
-            <Typography as="h1" scale="2xl" emphasis="bold" align="center" className="block">
-              Before you go
-            </Typography>
-            <Typography as="p" scale="sm" color="secondary" align="center" className="mb-24 mt-8 block">
-              We read every message personally — telling us what happened genuinely helps us fix
-              it for the next person.
+            <Typography as="h1" scale="2xl" emphasis="bold" align="center" className="mb-24 block">
+              Tell us your thoughts
             </Typography>
 
             <Textarea
