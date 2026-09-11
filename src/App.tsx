@@ -1,17 +1,22 @@
 import { PlanDetails } from "./screens/PlanDetails";
 import { UninstallFeedback } from "./screens/UninstallFeedback";
+import { Discover } from "./screens/Discover";
+import { Quiz } from "./screens/Quiz";
 
-// ponytail: these are two unrelated features (a purchase-flow screen and an
-// uninstall-feedback flow) that don't need to know about each other, and
-// there's no reason to pull in a router for exactly two screens. Each gets
-// its own URL; App.tsx just picks based on the path, no shared component
-// renders both. Visit /uninstall-feedback directly to demo that flow —
-// its real entry point (a Home Screen Quick Action on long-press) can't be
-// simulated in a browser at all, so a URL is the honest stand-in rather
-// than a dev button living inside PlanDetails' own render tree.
+// ponytail: four unrelated features, still no reason to pull in a router —
+// App.tsx just picks based on the path, no shared component renders more
+// than one of these. Visit each path directly to demo that flow.
 function App() {
-  if (window.location.pathname.startsWith("/uninstall-feedback")) {
+  const path = window.location.pathname;
+
+  if (path.startsWith("/uninstall-feedback")) {
     return <UninstallFeedback onDone={() => { window.location.pathname = "/"; }} />;
+  }
+  if (path.startsWith("/quiz/")) {
+    return <Quiz />;
+  }
+  if (path.startsWith("/discover")) {
+    return <Discover />;
   }
   return <PlanDetails />;
 }
