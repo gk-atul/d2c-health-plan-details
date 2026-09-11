@@ -4,18 +4,12 @@ import { Button } from "@acko/button";
 import { Card } from "@acko/card";
 import { Textarea } from "@acko/textarea";
 import { Alert } from "@acko/alert";
-import { Close, Mail, Gift, Stopwatch, TriangleWarning, Star, Tick } from "@acko/icons";
+import { Close, Mail, Gift, Stopwatch, TriangleWarning, Tick } from "@acko/icons";
 import FeedbackIntroIllustration from "../assets/illustrations/feedback-intro.svg";
+import FeedbackReviewCardIllustration from "../assets/illustrations/feedback-review-card.svg";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
-function Icon20({ icon: Cmp }: { icon: IconType }) {
-  return (
-    <span className="inline-flex size-20 shrink-0 [&_svg]:size-full" aria-hidden="true">
-      <Cmp aria-hidden="true" />
-    </span>
-  );
-}
 function Icon32({ icon: Cmp }: { icon: IconType }) {
   return (
     <span className="inline-flex size-32 shrink-0 [&_svg]:size-full" aria-hidden="true">
@@ -23,35 +17,16 @@ function Icon32({ icon: Cmp }: { icon: IconType }) {
     </span>
   );
 }
-function Icon40({ icon: Cmp }: { icon: IconType }) {
-  return (
-    <span className="inline-flex size-40 shrink-0 [&_svg]:size-full" aria-hidden="true">
-      <Cmp aria-hidden="true" />
-    </span>
-  );
-}
 
-// Same direction as the Swiggy reference (envelope + small sparkle accent,
-// warm and personal), built from real @acko/icons rather than a copied
-// asset: the icon-in-circle hero treatment already used for PlanDetails'
-// hero fallback (Icon40 in a 96px --accentPurpleSurface circle), plus a
-// small floating badge — Star, closest real icon to a "sparkle" accent —
-// at the corner, matching that hero's own accent-badge composition idiom.
+// Real illustration asset, same reasoning as the intro screen's own hero
+// (feedback-intro.svg) — a standalone illustration is a different tier
+// from an @acko/icons icon (flat, single-color, 16-32px), so this isn't
+// an icon-in-circle composition, just the provided asset. Replaces an
+// earlier icon-in-circle placeholder built before this asset existed.
 function FeedbackHeroIllustration() {
   return (
     <div className="mb-24 flex justify-center">
-      <div
-        className="relative flex h-96 w-96 items-center justify-center rounded-full"
-        style={{ background: "var(--accentPurpleSurface)" }}
-      >
-        <Icon40 icon={Mail} />
-        <span
-          className="absolute -right-4 -top-4 flex size-32 items-center justify-center rounded-full"
-          style={{ background: "var(--surfaceStaticWhite)", boxShadow: "var(--shadowXs)" }}
-        >
-          <Icon20 icon={Star} />
-        </span>
-      </div>
+      <img src={FeedbackReviewCardIllustration} alt="" aria-hidden="true" width={80} height={80} />
     </div>
   );
 }
