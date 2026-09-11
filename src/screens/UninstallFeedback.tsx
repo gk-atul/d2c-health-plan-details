@@ -4,10 +4,17 @@ import { Button } from "@acko/button";
 import { Card } from "@acko/card";
 import { Textarea } from "@acko/textarea";
 import { Alert } from "@acko/alert";
-import { Close, Mail, Gift, Stopwatch, TriangleWarning, Star } from "@acko/icons";
+import { Close, Mail, Gift, Stopwatch, TriangleWarning, Star, Tick } from "@acko/icons";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
+function Icon24({ icon: Cmp }: { icon: IconType }) {
+  return (
+    <span className="inline-flex size-24 shrink-0 [&_svg]:size-full" aria-hidden="true">
+      <Cmp aria-hidden="true" />
+    </span>
+  );
+}
 function Icon20({ icon: Cmp }: { icon: IconType }) {
   return (
     <span className="inline-flex size-20 shrink-0 [&_svg]:size-full" aria-hidden="true">
@@ -30,13 +37,12 @@ function Icon40({ icon: Cmp }: { icon: IconType }) {
   );
 }
 
-// Same direction as the reference (envelope + small sparkle accent, warm
-// and personal), built from real @acko/icons rather than a copied asset:
-// the icon-in-circle hero treatment already used for PlanDetails' hero
-// fallback (Icon40 in a 96px --accentPurpleSurface circle), plus a small
-// floating badge — Star, closest real icon to a "sparkle" accent — at the
-// corner, matching that hero's own accent-badge composition idiom rather
-// than inventing a new one.
+// Same direction as the Swiggy reference (envelope + small sparkle accent,
+// warm and personal), built from real @acko/icons rather than a copied
+// asset: the icon-in-circle hero treatment already used for PlanDetails'
+// hero fallback (Icon40 in a 96px --accentPurpleSurface circle), plus a
+// small floating badge — Star, closest real icon to a "sparkle" accent —
+// at the corner, matching that hero's own accent-badge composition idiom.
 function FeedbackHeroIllustration() {
   return (
     <div className="mb-24 flex justify-center">
@@ -103,14 +109,19 @@ const NUDGE_CONTENT: Record<
   },
 };
 
-type Step = "capture" | "nudge";
+// Three screens, matching the Swiggy reference's shape (intro/context ->
+// capture -> resolution) without its literal "message from the CEO"
+// framing — already decided that's just copy for the entry button, not a
+// real promise, so the intro here sets expectations in ACKO's own voice
+// instead of inventing a named executive's signature.
+type Step = "intro" | "capture" | "completion";
 
 export function UninstallFeedback({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState<Step>("capture");
+  const [step, setStep] = useState<Step>("intro");
   const [feedback, setFeedback] = useState("");
   const nudge = useMemo(() => NUDGE_CONTENT[classifyFeedback(feedback)], [feedback]);
 
-  const handleSubmit = useCallback(() => setStep("nudge"), []);
+  const handleSubmit = useCallback(() => setStep("completion"), []);
 
   return (
     <div style={{ background: "var(--surfaceBase)" }} className="min-h-screen">
@@ -121,7 +132,36 @@ export function UninstallFeedback({ onDone }: { onDone: () => void }) {
           </Button>
         </div>
 
-        {step === "capture" ? (
+        {step === "intro" ? (
+          <>
+            <div className="mb-16 flex items-center justify-center gap-8">
+              <Icon24 icon={Mail} />
+              <Typography as="h1" scale="2xl" emphasis="bold" align="center">
+                We'd love to hear from you
+              </Typography>
+            </div>
+
+            <Card variant="primary">
+              <div className="p-24">
+                <Typography as="p" scale="sm" className="mb-16 block">
+                  Before you go, tell us what happened.
+                </Typography>
+                <Typography as="p" scale="sm" color="secondary" className="mb-16 block">
+                  Our team personally reads every message that comes through here — it helps us
+                  fix real problems for the next person, not just log a statistic.
+                </Typography>
+                <Typography as="p" scale="sm" color="secondary" className="block">
+                  If something didn't work, felt unfair, or you simply don't need this anymore,
+                  we'd rather know than guess.
+                </Typography>
+              </div>
+            </Card>
+
+            <Button variant="primary" fullWidth className="mt-24" onClick={() => setStep("capture")}>
+              Share your feedback
+            </Button>
+          </>
+        ) : step === "capture" ? (
           <>
             <FeedbackHeroIllustration />
             <Typography as="h1" scale="2xl" emphasis="bold" align="center" className="block">
@@ -152,8 +192,20 @@ export function UninstallFeedback({ onDone }: { onDone: () => void }) {
           </>
         ) : (
           <>
+            <div className="mb-24 flex justify-center">
+              <div
+                className="flex size-64 items-center justify-center rounded-full"
+                style={{ background: "var(--statusSuccessSubtle)" }}
+              >
+                <Icon32 icon={Tick} />
+              </div>
+            </div>
+            <Typography as="h1" scale="xl" emphasis="bold" align="center" className="mb-24 block">
+              Got it — thank you
+            </Typography>
+
             <Alert variant="info" layout="inline" className="mb-24">
-              Thanks — this goes straight to our product team, not just a queue.
+              This goes straight to our product team, not just a queue.
             </Alert>
 
             <Card variant="primary">
